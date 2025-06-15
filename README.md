@@ -28,7 +28,6 @@ JuryMind AI empowers ML teams, AI researchers, and startups to measure, refine, 
 ### Prerequisites
 
 - Python 3.8+
-- Node.js 16+
 - Docker & Docker Compose
 - OpenAI API key (set in `.env`)
 
