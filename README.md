@@ -16,9 +16,10 @@ JuryMind AI empowers ML teams, AI researchers, and startups to measure, refine, 
 
 - **LLM Evaluation:** Score model outputs based on customizable criteria using expert LLM judges.
 - **Prompt Optimization:** Iteratively improve prompts to achieve specified goals like clarity, relevance, or conciseness.
+- **Dataset Generation** Generate high-quality datasets over your data.
 - **Auto Labeling:** Generate high-quality labels for datasets automatically using AI-driven judgments.
 - **Agentic Judges:** Leverage multiple AI agents working in parallel or consensus for robust evaluations.
-- **Modular Architecture:** Easily extend the platform with modules like JudgeLab, PromptLab, and LabelLab.
+- **Modular Architecture:** Easily extend the platform with modules like JudgeLab(TBD), PromptLab(TBD), and LabelLab.
 
 ---
 
