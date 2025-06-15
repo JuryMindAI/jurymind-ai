@@ -19,7 +19,7 @@ JuryMind AI empowers ML teams, AI researchers, and startups to measure, refine, 
 - **Dataset Generation** Generate high-quality datasets over your data.
 - **Auto Labeling:** Generate high-quality labels for datasets automatically using AI-driven judgments.
 - **Agentic Judges:** Leverage multiple AI agents working in parallel or consensus for robust evaluations.
-- **Modular Architecture:** Easily extend the platform with modules like JudgeLab(TBD), PromptLab(TBD), and LabelLab.
+- **Modular Architecture:** Easily extend the platform with modules like JudgeLab(TBD), PromptLab(TBD), and LabelLab(TBD).
 
 ---
 
