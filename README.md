@@ -1,4 +1,4 @@
-# AutoLabelAI
+# JuryMindAI
 Stealth project / framework to help handle LLM, Prompt, and Labeling Evaluation
 
 What it does
