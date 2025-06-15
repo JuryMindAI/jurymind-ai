@@ -1,4 +1,4 @@
-# JuryMind AI
+![alt text](https://github.com/GeorgeDittmar/jurymind-ai/blob/main/logo.png?raw=true)
 
 **Collective AI Judgment for Smarter Models**
 
