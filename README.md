@@ -6,7 +6,7 @@
 
 ## Overview
 
-JuryMind AI is an evaluation-as-a-service platform designed to harness the power of large language models (LLMs) as intelligent judges. Our platform enables automated LLM evaluation, prompt optimization, and auto-labeling with agentic AI judges working collaboratively — like a jury of experts.
+JuryMind AI is an evaluation-as-a-service platform designed to harness the power of large language models (LLMs) as intelligent judges. Our platform enables automated LLM evaluation, prompt optimization, dataset generation and auto-labeling with agentic AI judges working collaboratively — like a jury of experts.
 
 JuryMind AI empowers ML teams, AI researchers, and startups to measure, refine, and improve their language models and prompt engineering workflows with minimal manual effort.
 
