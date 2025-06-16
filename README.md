@@ -1,4 +1,4 @@
-![alt text](https://github.com/GeorgeDittmar/jurymind-ai/blob/main/docs/jurymindai-logo-slim.png?raw=true)
+![alt text](https://github.com/GeorgeDittmar/jurymind-ai/blob/main/docs/_static/jurymindai-logo-slim.png?raw=true)
 
 **Collective AI Judgment for Smarter Models**
 
