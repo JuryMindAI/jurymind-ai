@@ -3,12 +3,15 @@
 class BaseEvaluator:
     def evaluate():
         pass
-    
-    def 
 
-class LLMEvaluator(BaseEvaluator):
+class BleuScoreEvaluator(BaseEvaluator):
     pass
 
+class RougeScoreEvaluator(BaseEvaluator):
+    pass
+
+class OpenAiEvaluator(BaseEvaluator):
+    pass
 class JudgeEvaluator(BaseEvaluator):
     pass
 
