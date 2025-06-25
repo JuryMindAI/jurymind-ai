@@ -4,10 +4,10 @@ from abc import abstractmethod
 
 class BaseLLM:
     
-    def __init__(self):
+    def __init__(self, params=None):
         self.output_structure = None
         self.llm = None
-        self.llm_params:dict = None
+        self.llm_params:dict = params
     
    
     @abstractmethod
@@ -28,4 +28,14 @@ class BaseLLM:
     @abstractmethod
     def structured_output(self, llm: Self, structure) -> Self:
         """If an LLM supports structured output set it up here"""
+        pass
+
+    @abstractmethod
+    def stream_completion(self, prompt: Union[str]):
+        """streaming of llm response if supported by LLM"""
+        pass
+    
+    @abstractmethod
+    def astream_completion(self, prompt: Union[str]):
+        """streaming of llm response if supported by LLM"""
         pass
