@@ -26,7 +26,7 @@ class BaseLLM:
         pass
 
     @abstractmethod
-    def stream_completion(self, prompt: Union[str]):
+    def __stream_completion(self, event_stream):
         """streaming of llm response if supported by LLM"""
         pass
     

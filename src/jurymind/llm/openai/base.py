@@ -25,16 +25,20 @@ class OpenAiLLM(BaseLLM):
     
     def __format_message(user_prompt):
         message = [
-            {"role": "system"},
-            {"role": "user", }
+            {"role": "system", "content": ""},
+            {"role": "user", "content": user_prompt}
         ]
         return message
     
     async def acompletion(self, prompt):
         return NotImplemented
     
-    def stream_completion(self, prompt):
-        return 
+    def __stream_completion(self, event_stream):
+        if not event_stream:
+            raise RuntimeError("event stream cannot be None")
+        for chunk in event_stream:
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
     
     async def astream_completion(self, prompt):
         return NotImplemented
