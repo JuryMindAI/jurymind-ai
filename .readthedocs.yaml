@@ -45,9 +45,3 @@ build:
 mkdocs:
   configuration: docs/mkdocs.yml
 # Optionally declare the Python requirements required to build your docs
-
-python:
-  install:
-    - requirements: docs/requirements.txt
-    # Install our python package before building the docs
-    - method: pip
