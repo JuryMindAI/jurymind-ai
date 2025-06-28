@@ -1,26 +1,43 @@
 from llm.base import BaseLLM
-from abc import abstractmethod
+import asyncio
 import os
 
-import openai
+from openai import OpenAI
 
-class OpenAI(BaseLLM):
-    """OpenAI api support. This support is only for the LLM API calls."""
-    def __init__(self, api_key=None, model="gpt-4", params=None, ):
+
+class OpenAiLLM(BaseLLM):
+    """OpenAI api llm completion support"""
+    def __init__(self, api_key=None, model="gpt-4", params=None):
+          
+        if not api_key:
+            api_key = os.getnv("OPENAI_API_KEY")
+
+        self.super(OpenAI(api_key=api_key), params=params)
+
+    def completion(self, prompt, stream=False):
+        message = self.__format_message(prompt)
+        response = self.llm.chat.completions.create(message, stream=stream)
         
-        self.super(params=params)
-        self.llm = OpenAI()
-
-    def completion(self, prompt):
-        return super().completion(prompt)
+        if not stream:
+            return response
+        
+        # begin streaming the response back
     
-    def acompletion(self, prompt):
-        return super().acompletion(prompt)
+    def __format_message(user_prompt):
+        message = [
+            {"role": "system"},
+            {"role": "user", }
+        ]
+        return message
+    
+    async def acompletion(self, prompt):
+        return NotImplemented
     
     def stream_completion(self, prompt):
-        return super().stream_completion(prompt)
+        return 
     
-    def astream_completion(self, prompt):
-        return super().astream_completion(prompt)
+    async def astream_completion(self, prompt):
+        return NotImplemented
+        
     
         

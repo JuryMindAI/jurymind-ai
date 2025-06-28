@@ -12,6 +12,7 @@ class RougeScoreEvaluator(BaseEvaluator):
 
 class OpenAiEvaluator(BaseEvaluator):
     pass
+
 class JudgeEvaluator(BaseEvaluator):
     pass
 

@@ -1,23 +1,18 @@
 """Base class for LLM integrations"""
-from typing import Any, Self, Union
+from typing import Self, Union
 from abc import abstractmethod
 
+
 class BaseLLM:
-    
-    def __init__(self, params=None):
-        self.output_structure = None
-        self.llm = None
-        self.llm_params:dict = params
-    
-   
-    @abstractmethod
-    def __get_env_vars():
-        """Function to be implemented to grab environment variables if they are available"""
-        pass
+    """Base LLM class that all LLM classes must implement"""
+    def __init__(self, llm, params=None):
+        self.__output_structure = None
+        self.llm: BaseLLM = llm
+        self.llm_params: dict = params
 
     @abstractmethod
     def completion(self, prompt: Union[str]):
-        """Function to call the LLM"""
+        """Function to call the LLMs completion mechanism"""
         pass
     
     @abstractmethod
