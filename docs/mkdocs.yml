@@ -1,4 +1,5 @@
 theme:
   name: material
-site: JuryMindAi
+
+site_name: JuryMindAi
 site_url: https://www.jurymindai.com
