@@ -33,5 +33,5 @@ build:
 # Set the version of Python and other tools you might need
 
 mkdocs:
-  configuration: docs/mkdocs.yml
+  configuration: mkdocs.yml
 # Optionally declare the Python requirements required to build your docs
