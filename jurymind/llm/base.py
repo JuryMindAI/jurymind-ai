@@ -5,9 +5,10 @@ from abc import abstractmethod
 
 class BaseLLM:
     """Base LLM class that all LLM classes must implement"""
-    def __init__(self, llm, params=None):
+    def __init__(self, llm, model, params=None):
         self.__output_structure = None
-        self.llm: BaseLLM = llm
+        self.llm = llm
+        self.model: str = model
         self.llm_params: dict = params
 
     @abstractmethod
@@ -22,7 +23,8 @@ class BaseLLM:
 
     @abstractmethod
     def structured_output(self, llm: Self, structure) -> Self:
-        """If an LLM supports structured output set it up here"""
+        """If an LLM supports structured output set it up here
+        """
         pass
 
     @abstractmethod
@@ -32,5 +34,24 @@ class BaseLLM:
     
     @abstractmethod
     def astream_completion(self, prompt: Union[str]):
-        """streaming of llm response if supported by LLM"""
+        """
+        
+        Async streaming of llm response if supported by LLM
+            
+        """
+        
         pass
+    
+    @abstractmethod
+    def __format_message(user_prompt, system_prompt=None):
+        """
+        
+        
+        Format the prompt to the underlying LLM.
+        
+        Args:
+            user_prompt (_type_): the user prompt
+            system_prompt (_type_, optional): the system prompt the llm will use. Defaults to None.
+            
+            
+        """

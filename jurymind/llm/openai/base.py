@@ -1,18 +1,25 @@
-from llm.base import BaseLLM
+from jurymind.llm.base import BaseLLM
 import asyncio
 import os
 
 from openai import OpenAI
-from jurymind.core.prompts import 
-class OpenAiLLM(BaseLLM):
+from jurymind.core.prompts import DEFAULT_SYSTEM_PROMPT
+
+
+class OpenAILLM(BaseLLM):
     """OpenAI api llm completion support"""
 
     def __init__(self, api_key=None, model="gpt-4", params=None):
 
-        if not api_key:
-            api_key = os.getnv("OPENAI_API_KEY")
+        if api_key is None:
+            api_key = os.getenv("OPENAI_API_KEY")
 
-        self.super(OpenAI(api_key=api_key), params=params)
+        if api_key is None:
+            raise RuntimeError(
+                "OpenAI api key not found. Please set OPEN_API_KEY environment variable or set the api_key param."
+            )
+
+        super().__init__(OpenAI(api_key=api_key), model, params=params)
 
     def completion(self, prompt, stream=False):
 
@@ -31,7 +38,6 @@ class OpenAiLLM(BaseLLM):
         # begin streaming the response back
 
     def __format_message(user_prompt, system_prompt=None):
-
         message = [
             {
                 "role": "system",
@@ -44,6 +50,7 @@ class OpenAiLLM(BaseLLM):
         return message
 
     async def acompletion(self, prompt):
+        """Async support for OpenAI completions"""
         return NotImplemented
 
     def __stream_completion(self, event_stream):

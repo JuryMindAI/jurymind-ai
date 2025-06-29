@@ -2,3 +2,6 @@ theme:
   name: material
 site_name: JuryMindAi
 site_url: https://www.jurymindai.com
+
+plugins: 
+  - mkdocstrings
