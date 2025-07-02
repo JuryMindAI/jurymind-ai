@@ -5,14 +5,14 @@ from abc import abstractmethod
 
 class BaseLLM:
     """Base LLM class that all LLM classes must implement"""
-    def __init__(self, llm, model, params=None):
+    def __init__(self, model, params=None):
         self.__output_structure = None
-        self.llm = llm
+        # self.llm = llm
         self.model: str = model
         self.llm_params: dict = params
 
     @abstractmethod
-    def completion(self, prompt: Union[str]):
+    def completion(self, prompt: str):
         """Function to call the LLMs completion mechanism"""
         pass
     

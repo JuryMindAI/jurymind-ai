@@ -1,8 +1,8 @@
-from jurymind.llm.base import BaseLLM
 import asyncio
 import os
 
 from openai import OpenAI
+from jurymind.llm.base import BaseLLM
 from jurymind.core.prompts import DEFAULT_SYSTEM_PROMPT
 
 
@@ -18,16 +18,17 @@ class OpenAILLM(BaseLLM):
             raise RuntimeError(
                 "OpenAI api key not found. Please set OPEN_API_KEY environment variable or set the api_key param."
             )
-
-        super().__init__(OpenAI(api_key=api_key), model, params=params)
+        self.llm = OpenAI()
+        self.model = model
+        # super().__init__(model, params=params)
 
     def completion(self, prompt, stream=False):
 
         if not prompt:
             raise RuntimeError("Prompt cannot be None or empty String.")
-
+        print("AHHHH")
         message = self.__format_message(prompt)
-        response = self.llm.chat.completions.create(message, stream=stream)
+        response = self.llm.chat.completions.create(model=self.model, messages=message, stream=stream)
 
         if not stream:
             """Return response object"""
@@ -37,7 +38,7 @@ class OpenAILLM(BaseLLM):
 
         # begin streaming the response back
 
-    def __format_message(user_prompt, system_prompt=None):
+    def __format_message(self, user_prompt, system_prompt=None):
         message = [
             {
                 "role": "system",
