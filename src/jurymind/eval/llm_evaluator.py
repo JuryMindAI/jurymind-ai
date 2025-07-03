@@ -16,4 +16,13 @@ class JudgeEvaluator(BaseEvaluator):
     pass
 
 class JuryEvaluator(BaseEvaluator):
+<<<<<<< Updated upstream:src/jurymind/eval/llm_evaluator.py
     pass
+=======
+    pass
+
+
+class PoLLEvaluator(BaseEvaluator):
+    # based on the paper https://arxiv.org/abs/2404.18796
+    pass
+>>>>>>> Stashed changes:jurymind/eval/base.py
