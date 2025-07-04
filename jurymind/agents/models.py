@@ -29,8 +29,11 @@ class JudgeDecision(BaseModel):
     
 class OptimizationResult(BaseModel):
     optimized_prompt: str
+    optimization_history: list[dict] # store the list of optimization history
     original_prompt: str
     reason: str
+    stop: bool
+    
 
     
 class OptimizationRequest(BaseModel):
