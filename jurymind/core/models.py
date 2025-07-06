@@ -59,9 +59,14 @@ class PromptOptimizationRunResult(OptimizationRunResult):
 
 
 class PromptOptimizationRequest(BaseModel):
-    prompt: str = Field(
-        description="Prompt to be optimized to best work with an LLM and Semantic Search queries."
-    )
+    prompt: str = Field(description="Prompt to be optimized by the agent")
     examples: Optional[dict] = Field(
-        description="Optional list of examples to better tune the optimization to."
+        description="Optional list of examples to better tune the optimization to specific tasks."
+    )
+
+
+class OptimzationModelMap(BaseModel):
+    # idea of some storage to keep prompt context around which could be brought back up for the LLM to use.
+    params: dict = Field(
+        description="Dictionary of params to help a model stay tuned to the task. IE. prompt plus any additional domain information."
     )

@@ -7,6 +7,7 @@ from pydantic_ai import Agent
 from jurymind.core.models import (
     OptimizationStepResult,
     OptimizationRunResult,
+    PromptOptimizationRequest,
     JudgeDecision,
 )
 
@@ -16,25 +17,29 @@ load_dotenv()
 OPTIMIZER_INSTRUCTIONS = f"""Your job is to optimize a prompt from a user. You optimize 
 by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the required task.
 
-Request to optimize:
+Request to optimize format:
 
-{.model_json_schema()}
+{PromptOptimizationRequest.model_json_schema()}
 
 Output your results like so:
 
-{OptimizationResult.model_json_schema()}
+{OptimizationStepResult.model_json_schema()}
 
 result:
 """
-print(OPTIMIZER_INSTRUCTIONS)
+
+OPTIMIZATION_PROMPT
+
+
+
 agent = Agent(
     "openai:gpt-4.1-mini",
-    output_type=OptimizationResult,
+    output_type=OptimizationStepResult,
     system_prompt=OPTIMIZER_INSTRUCTIONS,
     retries=3,
 )
 
-judge = Agent("openai:chatgpt-4o-mini")
+judge = Agent("openai:chatgpt-4.1-mini")
 
 curr_prompt = "Why do cat live do they happy life?"
 prompt_hist = []
@@ -44,9 +49,9 @@ max_iteration = 10
 
 def optimize(
     optimization_request: PromptOptimizationRequest, max_iteration=5
-) -> OptimizationResult:
+) -> OptimizationRunResult:
     i = 0
-
+    print(optim)
     while i < max_iteration:
         print(f"Iteration: {i+1}")
         # call agent, get response and see if we should keep optimizing or not
