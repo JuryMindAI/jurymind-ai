@@ -41,10 +41,7 @@ class OptimizationStepResult(BaseModel):
         description="Detailed explanation for the changes and why the changes were needed."
     )
     confidence_score: str = Field(
-        description="Likert scale between 1 to 5 on how confident the agent is."
-    )
-    stop: bool = Field(
-        description="Whether the prompt is optimal or if the agent determines it needs another iteration of rewrite."
+        description="Score based on the Likert scale between 1 to 5 on how confident the agent is in the change being better than previous prompt."
     )
 
 

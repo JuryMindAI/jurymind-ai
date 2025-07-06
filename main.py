@@ -8,29 +8,9 @@ from jurymind.core.models import (
     OptimizationStepResult,
     OptimizationRunResult,
     PromptOptimizationRequest,
-    JudgeDecision,
 )
 
 load_dotenv()
-
-
-OPTIMIZER_INSTRUCTIONS = f"""Your job is to optimize a prompt from a user. You optimize 
-by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the required task.
-
-Request to optimize format:
-
-{PromptOptimizationRequest.model_json_schema()}
-
-Output your results like so:
-
-{OptimizationStepResult.model_json_schema()}
-
-result:
-"""
-
-OPTIMIZATION_PROMPT
-
-
 
 agent = Agent(
     "openai:gpt-4.1-mini",
