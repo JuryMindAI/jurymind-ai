@@ -13,6 +13,7 @@ from jurymind.core.models import (
 from jurymind.core.prompts.optimize.base import (
     OPTIMIZER_INSTRUCTIONS,
     OPTIMZE_PROMPT_STEP,
+    OPTIMIZER_TEMPLATE
 )
 
 load_dotenv()
@@ -36,8 +37,8 @@ def optimize(
     optimization_request: PromptOptimizationRequest, max_iteration=5
 ) -> OptimizationRunResult:
 
+    curr_prompt = OPTIMIZER_INSTRUCTIONS.format()
     i = 0
-    print(optim)
     while i < max_iteration:
         print(f"Iteration: {i+1}")
         # call agent, get response and see if we should keep optimizing or not
@@ -51,3 +52,10 @@ def optimize(
             print("Stopping iteration")
             break
         i += 1
+
+
+print(PromptOptimizationRequest(task_description="AHHH", prompt="hello", examples={}).model_json_schema())
+print()
+print(PromptOptimizationRequest(task_description="AHHH", prompt="hello", examples={}).model_dump_json())
+
+print(OPTIMIZER_TEMPLATE)

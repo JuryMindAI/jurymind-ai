@@ -58,12 +58,12 @@ class PromptOptimizationRunResult(OptimizationRunResult):
 
 
 class OptimizationRequest(BaseModel):
-    task: str = Field(
+    task_description: str = Field(
         description="Instructions to give to the agent on what this prompts maint ask is."
     )
 
 
-class PromptOptimizationRequest(BaseModel):
+class PromptOptimizationRequest(OptimizationRequest):
     prompt: str = Field(description="Prompt to be optimized by the agent")
     examples: Optional[dict] = Field(
         description="Optional list of examples to better tune the optimization to specific tasks."
