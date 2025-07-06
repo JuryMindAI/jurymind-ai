@@ -10,6 +10,11 @@ from jurymind.core.models import (
     PromptOptimizationRequest,
 )
 
+from jurymind.core.prompts.optimize.base import (
+    OPTIMIZER_INSTRUCTIONS,
+    OPTIMZE_PROMPT_STEP,
+)
+
 load_dotenv()
 
 agent = Agent(
@@ -30,8 +35,7 @@ max_iteration = 10
 def optimize(
     optimization_request: PromptOptimizationRequest, max_iteration=5
 ) -> OptimizationRunResult:
-    
-    
+
     i = 0
     print(optim)
     while i < max_iteration:
