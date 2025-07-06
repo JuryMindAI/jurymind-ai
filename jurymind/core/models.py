@@ -47,7 +47,7 @@ class OptimizationStepResult(BaseModel):
 
 class OptimizationRunResult(BaseModel):
     steps: list[OptimizationStepResult]
-    model: str
+    model_id: str
 
 
 class PromptOptimizationRunResult(OptimizationRunResult):
