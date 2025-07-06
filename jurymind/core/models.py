@@ -53,9 +53,15 @@ class OptimizationRunResult(BaseModel):
 class PromptOptimizationRunResult(OptimizationRunResult):
     optimal: str
     original: str
+    explanation: str
+    confidence_score: str
+
 
 class OptimizationRequest(BaseModel):
-    task: str = Field(description="Instructions to give to the agent on what this prompts maint ask is.")
+    task: str = Field(
+        description="Instructions to give to the agent on what this prompts maint ask is."
+    )
+
 
 class PromptOptimizationRequest(BaseModel):
     prompt: str = Field(description="Prompt to be optimized by the agent")
