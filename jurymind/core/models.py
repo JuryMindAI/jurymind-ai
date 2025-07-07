@@ -59,7 +59,7 @@ class PromptOptimizationRunResult(OptimizationRunResult):
 
 class OptimizationRequest(BaseModel):
     task_description: str = Field(
-        description="Instructions to give to the agent on what this prompts maint ask is."
+        description="Instructions to give to the agent on what type of task this type of prompt is in association with."
     )
 
 

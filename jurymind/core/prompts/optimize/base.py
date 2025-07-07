@@ -21,9 +21,6 @@ Output your results like so:
 result:
 """
 
-# schema as raw string (no need to format it)
-formatted_schema = json.dumps(OptimizationStepResult.model_json_schema(), indent=2)
-
 # only parameterize this part
 OPTIMIZER_TEMPLATE = """Your job is to optimize a prompt from a user. You optimize 
 by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the required task.
@@ -37,19 +34,26 @@ Request to optimize values:
 {optimize_job}
 
 Output your results like so:
+
+{schema}
+
+result:
 """
 
-# build the final string
-OPTIMIZER_TEMPLATE = OPTIMIZER_TEMPLATE.format(
-    task_desc="hello",
-    optimize_job="HHH"
-) + f"\n{formatted_schema}\n\nresult:"
+class PromptOptimizer:
+    
+    def __init__(self, optimization_job, model="", max_epochs=1, num_workers=1):
+        self.num_workers = num_workers
+        self.max_epochs = max_epochs
+        self.optimization_result = None
+        self.optimization_request = None
+    
+    def __build_optimizer_prompt(self, task_desc, optimize_job, schema):
+        return OPTIMIZER_TEMPLATE.format(
+            task_desc=json.dumps(task_desc, indent=2),
+            optimize_job=json.dumps(optimize_job, indent=2),
+            schema=json.dumps(schema, indent=2)
+        )
 
-import json
-
-def __build_optimizer_prompt(task_desc, optimize_job, schema):
-    return OPTIMIZER_PROMPT_TEMPLATE.format(
-        task_desc=json.dumps(task_desc, indent=2),
-        optimize_job=json.dumps(optimize_job, indent=2),
-        schema=json.dumps(schema, indent=2)
-    )
+    def optimize(self):
+        pass
