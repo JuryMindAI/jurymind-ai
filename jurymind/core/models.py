@@ -41,8 +41,9 @@ class OptimizationStepResult(BaseModel):
         description="Detailed explanation for the changes and why the changes were needed."
     )
     confidence_score: str = Field(
-        description="Score based on the Likert scale between 1 to 5 on how confident the agent is in the change being better than previous prompt."
+        description="Score based on the Likert scale between 1 to 5 on how confident you are in the change being better than previous prompt."
     )
+    stop: bool
 
 
 class OptimizationRunResult(BaseModel):
@@ -59,14 +60,15 @@ class PromptOptimizationRunResult(OptimizationRunResult):
 
 class OptimizationRequest(BaseModel):
     task_description: str = Field(
-        description="Instructions to give to the agent on what type of task this type of prompt is in association with."
+        description="Instructions to give to the agent on what type of task this type of prompt is in association with. for example: this prompt is about movie ranking and classification."
     )
 
 
 class PromptOptimizationRequest(OptimizationRequest):
     prompt: str = Field(description="Prompt to be optimized by the agent")
     examples: Optional[dict] = Field(
-        description="Optional list of examples to better tune the optimization to specific tasks."
+        default=None,
+        description="Optional list of examples to better tune the optimization to specific tasks.",
     )
 
 
