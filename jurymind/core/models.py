@@ -77,3 +77,11 @@ class OptimzationModelMap(BaseModel):
     params: dict = Field(
         description="Dictionary of params to help a model stay tuned to the task. IE. prompt plus any additional domain information."
     )
+    
+
+class DataPoint(BaseModel):
+    example: str = Field(description="Stores the example that was generated for the dataset.")
+    label: str = Field(description="Label for the example.")
+
+class DataGenerationOutput(BaseModel):
+    generated_dataset: list[DataPoint] = Field(description="Field to list the generated dataset examples based on the task description.")    

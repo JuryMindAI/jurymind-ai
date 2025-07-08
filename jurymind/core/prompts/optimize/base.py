@@ -41,18 +41,28 @@ result:
 """
 
 OPTIMIZER_DATA_GENERATOR = """ 
-You are an expert AI system, which is accurate, concise, and follows instructions exactly. Your task is to generate {n} sample datapoints based on the task description provided
+You are an expert AI system which generates data sets about the given task description. Your task is to generate {n} extremely challenging, realistic, and very different examples based on the task description provided.
+Each generated example must be 3 sentences long. Be sure that you do not accidentally attempt to classify your own generated example.
+
+The each exmaple must also adhere to the following:
+
+1. The example must be extremely challenging, unique to previous examples.
+2. The example must be an even number of positive and negative datapoints so we have a balanced dataset.
+3. The example must not include an explanation of the example.
 
 Below is the request for data generation format with field descriptions:
 
-{generator_schema}
+{task_desc}
 
 Here is the task description:
-{task_desc}
+
+{generator_job}
 
 You must output in the following structured format:
 
-{generator_output}
+{output_schema}
+
+result:
 """
 
 
@@ -78,8 +88,10 @@ class PromptOptimizationPolicy:
     def optimize(self):
         pass
 
+
 class DataGenerationPolicy:
     pass
+
 
 class LLMEvaluationPolicy:
     pass
