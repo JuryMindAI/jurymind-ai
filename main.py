@@ -11,6 +11,7 @@ from jurymind.core.models import (
     PromptOptimizationRequest,
     DataGenerationOutput,
     ClassificationReport,
+    BatchClassificationResult
 )
 
 from jurymind.core.prompts.optimize.base import (
@@ -22,7 +23,8 @@ from jurymind.core.prompts.optimize.base import (
 load_dotenv()
 
 agent = Agent(
-    "openai:gpt-4.1-mini", output_type=OptimizationStepResult,
+    "openai:gpt-4.1-mini",
+    output_type=OptimizationStepResult,
     retries=3,
 )
 
@@ -33,10 +35,10 @@ generator_agent = Agent(
 )
 
 classification_agent = Agent(
-    "openai:gpt-4.1-mini", output_type=ClassificationReport, retries=3
+    "openai:gpt-4.1-mini", output_type=BatchClassificationResult, retries=3
 )
 
-judge = Agent("openai:chatgpt-4.1-mini")
+# judge = Agent("openai:chatgpt-4.1-mini")
 
 curr_prompt = "Why do cat live do they happy life?"
 prompt_hist = []
@@ -85,9 +87,9 @@ def optimize(
 
     """
         TODO:
-        1. create the optimization system prompt
-        2. Take the task description and prompt and generate examples within the task.
-        3. Pull a subset of generated samples and have LLM label them, or allow for human input examples.
+        1. create the optimization system prompt Done
+        2. Take the task description and prompt and generate examples within the task. Done
+        3. Pull a subset of generated samples and have LLM label them, or allow for human input examples. Done
         4. Search the space for the best optimized prompt (treat this like a classification problem)
             1. Take prompt, apply it to the generated samples
             2. evalute the prompts ability to elicit correct behavior
@@ -100,15 +102,16 @@ def optimize(
     while i < max_iteration:
         print(f"Iteration: {i+1}")
         # call agent, get response and see if we should keep optimizing or not
-        result = agent.run_sync(curr_prompt)
-        gen_examples = generator_agent.run_sync(generator_prompt)
-
-        batch_prediction_result = __build_classifier_prompt(
+        # result = agent.run_sync(curr_prompt)
+        gen_examples = generator_agent.run_sync(generator_prompt).output
+        print(gen_examples.examples)
+        batch_prediction_prompt = __build_classifier_prompt(
             prompt=optimization_request.prompt,
-            batch=json.dumps(gen_examples.generated_batch), 
-            output_schema=ClassificationReport.model_json_schema()
+            batch=json.dumps(gen_examples.examples), # dont give the model both the example and the labels, I think the AI will cheat
+            output_schema=ClassificationReport.model_json_schema(),
         )
-
+        
+        batch_prediction_result = classification_agent.run_sync(batch_prediction_prompt).output
         print(batch_prediction_result)
         # eval_result = classification_agent.run_sync()
         return
@@ -137,7 +140,7 @@ def optimize(
 #     ).model_dump_json()
 # )
 
-result, gen_result = optimize(
+result = optimize(
     PromptOptimizationRequest(
         task_description="The task is aclassification task to check if a movie review has spoilers in them or not.",
         prompt="Do these movie reviews contain spoilers? Response with a True or False.",
@@ -146,4 +149,4 @@ result, gen_result = optimize(
 
 print(result)
 print()
-print(gen_result)
+# print(gen_result)

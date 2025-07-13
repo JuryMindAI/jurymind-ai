@@ -41,24 +41,25 @@ result:
 """
 
 OPTIMIZER_DATA_GENERATOR = """ 
-You are an expert AI system which generates challenging and unique examples based on the given task description. 
+You are an expert AI agent which generates very challenging and unique examples based on the given task description. 
 Your must generate {n} extremely challenging, realistic, and very different examples.
-Be sure that you do not accidentally attempt to classify your own generated example.
+Be sure that you do not accidentally attempt to classify your own generated examples.
 
-Eeach exmaple must also adhere to the following rules exactly:
+Each example must also adhere to the following rules exactly:
 
-1. Each example must be realistic to the task being described. 
+1. Each example must be realistic to the task description. 
 2. The examples must be extremely challenging, and unique to previous examples.
 5. There must be an even number of positive and negative examples so we have a balanced dataset.
 6. The examples must not include an explanation of the example.
+
+Here is the task description:
+
+{task_description}
 
 Below is the request for data generation format with field descriptions:
 
 {generator_job}
 
-Here is the task description:
-
-{task_description}
 
 You must output in the following structured format:
 
@@ -68,7 +69,7 @@ result:
 """
 
 CLASSIFICATION_INSTRUCTIONS = """
-You're task is to classify {batch_size} examples based on the prompts instructions. 
+You're task is to classify the following examples based on the prompts instructions. 
 Assume this is a binary classification task. You will classify the examples according to the prompt
 and generate the accuracy, confusion matrix, suggestions as to how to modify the prompt and why it failed, and list of failure cases
 from the dataset.
@@ -77,7 +78,7 @@ Task prompt:
 
 {prompt}
 
-Batch to classify:
+Batch to classify using the above task prompt:
    
 {batch}
 

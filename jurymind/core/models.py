@@ -89,9 +89,10 @@ class DataPoint(BaseModel):
 
 
 class DataGenerationOutput(BaseModel):
-    generated_batch: list[DataPoint] = Field(
-        description="You list the generated datapoints."
+    examples: list[str] = Field(
+        description="You list the generated examples here and DO NOT inlcude the label."
     )
+    labels: list[int] = Field(description="You put the labels here for the generated examples.")
 
 
 class SampleAnalysis(BaseModel):
@@ -103,7 +104,7 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    sample: DataPoint = Field(description="The sample that is to be classified according to the task.")
+    sample: str = Field(description="The sample that is to be classified according to the task.")
     prompt: str = Field(description="Prompt used to classify the sample.")
     prediction: int = Field(
         description="Binary classification prediction of the example."
@@ -128,7 +129,10 @@ class OptimizationErrorReport(BaseModel):
         description="Confusion matrix of the examples as a dictionary with the keys being TP, FP, TN, FN"
     )
 
-
+class BatchClassificationResult(BaseModel):
+    results: list[ClassificationResult]
+    
+    
 class ClassificationReport(BaseModel):
     prompt: str = Field(
         description="The prompt that was used for the task on the examples."
