@@ -1,6 +1,7 @@
 import os
 import asyncio
 import json
+
 # from jurymind.llm.openai import OpenAILLM
 from dotenv import load_dotenv
 from pydantic_ai import Agent
@@ -8,30 +9,31 @@ from jurymind.core.models import (
     OptimizationStepResult,
     OptimizationRunResult,
     PromptOptimizationRequest,
-    DataGenerationOutput
+    DataGenerationOutput,
+    ClassificationReport,
 )
 
 from jurymind.core.prompts.optimize.base import (
-    OPTIMIZER_INSTRUCTIONS,
-    OPTIMZE_PROMPT_STEP,
     OPTIMIZER_TEMPLATE,
-    OPTIMIZER_DATA_GENERATOR
+    OPTIMIZER_DATA_GENERATOR,
+    CLASSIFICATION_INSTRUCTIONS,
 )
 
 load_dotenv()
 
 agent = Agent(
-    "openai:gpt-4.1-mini",
-    output_type=OptimizationStepResult,
-    # system_prompt=OPTIMIZER_INSTRUCTIONS,
+    "openai:gpt-4.1-mini", output_type=OptimizationStepResult,
     retries=3,
 )
 
 generator_agent = Agent(
     "openai:gpt-4.1-mini",
     output_type=DataGenerationOutput,
-    # system_prompt=OPTIMIZER_INSTRUCTIONS,
     retries=3,
+)
+
+classification_agent = Agent(
+    "openai:gpt-4.1-mini", output_type=ClassificationReport, retries=3
 )
 
 judge = Agent("openai:chatgpt-4.1-mini")
@@ -42,20 +44,26 @@ i = 0
 max_iteration = 10
 
 
-def __build_optimizer_prompt(task_desc, optimize_job, schema):
+def __build_optimizer_prompt(task_desc, optimize_job, output_schema):
     return OPTIMIZER_TEMPLATE.format(
         task_desc=json.dumps(task_desc, indent=2),
         optimize_job=json.dumps(optimize_job, indent=2),
-        schema=json.dumps(schema, indent=2),
+        output_schema=json.dumps(output_schema, indent=2),
     )
-    
-    
+
+
 def __build_generator_prompt(task_desc, generator_job, output_schema):
     return OPTIMIZER_DATA_GENERATOR.format(
-        n = 10,
-        task_desc=json.dumps(task_desc, indent=2),
-        generator_job=json.dumps(generator_job, indent=2),
+        n=10,
+        generator_job=json.dumps(task_desc, indent=2),
+        task_description=json.dumps(generator_job, indent=2),
         output_schema=json.dumps(output_schema, indent=2),
+    )
+
+
+def __build_classifier_prompt(prompt, batch, output_schema):
+    return CLASSIFICATION_INSTRUCTIONS.format(
+        prompt=prompt, batch=batch, output_schema=output_schema
     )
 
 
@@ -66,16 +74,15 @@ def optimize(
     sys_prompt = __build_optimizer_prompt(
         task_desc=json.dumps(PromptOptimizationRequest.model_json_schema(), indent=2),
         optimize_job=json.dumps(optimization_request.model_dump_json(), indent=2),
-        schema=json.dumps(OptimizationStepResult.model_json_schema(), indent=2),
-        )
-    
-    generator_prompt = __build_generator_prompt(        
+        output_schema=json.dumps(OptimizationStepResult.model_json_schema(), indent=2),
+    )
+
+    generator_prompt = __build_generator_prompt(
         task_desc=PromptOptimizationRequest.model_json_schema(),
         generator_job=optimization_request.model_dump_json(),
         output_schema=DataGenerationOutput.model_json_schema(),
-        )
-   
-    print(generator_prompt)
+    )
+
     """
         TODO:
         1. create the optimization system prompt
@@ -85,7 +92,7 @@ def optimize(
             1. Take prompt, apply it to the generated samples
             2. evalute the prompts ability to elicit correct behavior
             3. create error report to send to judge agents
-            4. generate additional sample prompts based on the error report findings and go to 1.
+            4. generate additional sample prompts based on the error report findings and go to step 1.
         5. return the optimized prompt
     """
     curr_prompt = sys_prompt
@@ -94,8 +101,17 @@ def optimize(
         print(f"Iteration: {i+1}")
         # call agent, get response and see if we should keep optimizing or not
         result = agent.run_sync(curr_prompt)
-        gen_result = generator_agent.run_sync(generator_prompt)
-        curr_prompt = result.output.optimized_prompt
+        gen_examples = generator_agent.run_sync(generator_prompt)
+
+        batch_prediction_result = __build_classifier_prompt(
+            prompt=optimization_request.prompt,
+            batch=json.dumps(gen_examples.generated_batch), 
+            output_schema=ClassificationReport.model_json_schema()
+        )
+
+        print(batch_prediction_result)
+        # eval_result = classification_agent.run_sync()
+        return
         prompt_hist.append(result)
         # if result.stop:
         #     print("Stopping")
@@ -104,8 +120,9 @@ def optimize(
             print("Stopping iteration")
             break
         i += 1
-        
-    return result, gen_result
+        return
+
+    return result
 
 
 # print(
@@ -120,7 +137,12 @@ def optimize(
 #     ).model_dump_json()
 # )
 
-result, gen_result = optimize(PromptOptimizationRequest(task_description="The task is classification task to check if movie reviews have spoilers in them.", prompt="Do these movie reviews contain spoilers? Response with a yes or no."))
+result, gen_result = optimize(
+    PromptOptimizationRequest(
+        task_description="The task is aclassification task to check if a movie review has spoilers in them or not.",
+        prompt="Do these movie reviews contain spoilers? Response with a True or False.",
+    )
+)
 
 print(result)
 print()

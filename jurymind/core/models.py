@@ -60,7 +60,7 @@ class PromptOptimizationRunResult(OptimizationRunResult):
 
 class OptimizationRequest(BaseModel):
     task_description: str = Field(
-        description="Instructions to give to the agent on what type of task this type of prompt is in association with. for example: this prompt is about movie ranking and classification."
+        description="Instructions to give to the agent on what type of task the prompt is associated with."
     )
 
 
@@ -68,7 +68,7 @@ class PromptOptimizationRequest(OptimizationRequest):
     prompt: str = Field(description="Prompt to be optimized by the agent")
     examples: Optional[dict] = Field(
         default=None,
-        description="Optional list of examples to better tune the optimization to specific tasks.",
+        description="Optional list of examples to better tune to specific tasks.",
     )
 
 
@@ -77,11 +77,74 @@ class OptimzationModelMap(BaseModel):
     params: dict = Field(
         description="Dictionary of params to help a model stay tuned to the task. IE. prompt plus any additional domain information."
     )
-    
+
 
 class DataPoint(BaseModel):
-    example: str = Field(description="Stores the example that was generated for the dataset.")
-    label: str = Field(description="Label for the example.")
+    example: str = Field(
+        description="Stores the example that was generated for the dataset."
+    )
+    label: int = Field(
+        description="Binary label for the example with 1 being true and 0 being false."
+    )
+
 
 class DataGenerationOutput(BaseModel):
-    generated_dataset: list[DataPoint] = Field(description="Field to list the generated dataset examples based on the task description.")    
+    generated_batch: list[DataPoint] = Field(
+        description="You list the generated datapoints."
+    )
+
+
+class SampleAnalysis(BaseModel):
+    analysis: str
+    reasoning: str = Field(
+        description="A detailed and concise 2-3 sentence explanation of why you came to this analysis."
+    )
+    prediction: int = Field(description="Boolean prediction of a sample of data.")
+
+
+class ClassificationResult(BaseModel):
+    sample: DataPoint = Field(description="The sample that is to be classified according to the task.")
+    prompt: str = Field(description="Prompt used to classify the sample.")
+    prediction: int = Field(
+        description="Binary classification prediction of the example."
+    )
+
+
+class OptimizationStep(BaseModel):
+    pass
+
+
+class OptimizationErrorReport(BaseModel):
+    examples: list[SampleAnalysis] = Field(
+        description="List of analysis for each sample from the dataset"
+    )
+    suggested_changes: str = Field(
+        description="List of changes that should be made to the original prompt to improve it according to the ."
+    )
+    accuracy: float = Field(
+        description="The accuracy percentage of the examples to the true label."
+    )
+    confusion_matrix: dict = Field(
+        description="Confusion matrix of the examples as a dictionary with the keys being TP, FP, TN, FN"
+    )
+
+
+class ClassificationReport(BaseModel):
+    prompt: str = Field(
+        description="The prompt that was used for the task on the examples."
+    )
+    classification_results: list[ClassificationResult] = Field(
+        description="Classification results for each test example"
+    )
+    suggested_changes: str = Field(
+        description="Changes that should be made to the original prompt to improve its ability to perform the task."
+    )
+    accuracy: float = Field(
+        description="The accuracy percentage of the classification results to the true label."
+    )
+    confusion_matrix: dict = Field(
+        description="Confusion matrix of the classification results as a dictionary with the keys being TP, FP, TN, FN"
+    )
+    failure_examples: list[ClassificationResult] = Field(
+        description="Examples that were misclassified with the prompt."
+    )

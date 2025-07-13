@@ -35,28 +35,30 @@ Request to optimize values:
 
 Output your results like so:
 
-{schema}
+{output_schema}
 
 result:
 """
 
 OPTIMIZER_DATA_GENERATOR = """ 
-You are an expert AI system which generates data sets about the given task description. Your task is to generate {n} extremely challenging, realistic, and very different examples based on the task description provided.
-Each generated example must be 3 sentences long. Be sure that you do not accidentally attempt to classify your own generated example.
+You are an expert AI system which generates challenging and unique examples based on the given task description. 
+Your must generate {n} extremely challenging, realistic, and very different examples.
+Be sure that you do not accidentally attempt to classify your own generated example.
 
-The each exmaple must also adhere to the following:
+Eeach exmaple must also adhere to the following rules exactly:
 
-1. The example must be extremely challenging, unique to previous examples.
-2. The example must be an even number of positive and negative datapoints so we have a balanced dataset.
-3. The example must not include an explanation of the example.
+1. Each example must be realistic to the task being described. 
+2. The examples must be extremely challenging, and unique to previous examples.
+5. There must be an even number of positive and negative examples so we have a balanced dataset.
+6. The examples must not include an explanation of the example.
 
 Below is the request for data generation format with field descriptions:
 
-{task_desc}
+{generator_job}
 
 Here is the task description:
 
-{generator_job}
+{task_description}
 
 You must output in the following structured format:
 
@@ -65,6 +67,51 @@ You must output in the following structured format:
 result:
 """
 
+CLASSIFICATION_INSTRUCTIONS = """
+You're task is to classify {batch_size} examples based on the prompts instructions. 
+Assume this is a binary classification task. You will classify the examples according to the prompt
+and generate the accuracy, confusion matrix, suggestions as to how to modify the prompt and why it failed, and list of failure cases
+from the dataset.
+
+Task prompt: 
+
+{prompt}
+
+Batch to classify:
+   
+{batch}
+
+You must output your results to the following format:
+
+{output_schema}
+
+Report:
+"""
+
+EVALUATE_INSTRUCTIONS = """
+You are an expert prompt evaluation AI agent that must evaluate if the prompt
+
+Prompt:
+
+Accuracy: 
+{}
+
+Confusion Matrix: 
+{}
+
+Task Description:
+    
+{task_description}
+
+Instructions are as follows:
+1. Perform the task on the datapoint
+2. Generate a prediction based on the task. If the task doesnt not explain how to label the prediction, assume binary labels.
+3. Analyise the prompt to the datapoint and come up with a reason why this prompt may and may not work at predicting the label.
+
+
+Structure the output like so:
+{classification_result}
+"""
 
 class PromptOptimizationPolicy:
     """
@@ -85,7 +132,7 @@ class PromptOptimizationPolicy:
             schema=json.dumps(schema, indent=2),
         )
 
-    def optimize(self):
+    def optimize(self, prompt):
         pass
 
 
