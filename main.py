@@ -18,6 +18,7 @@ from jurymind.core.prompts.optimize.base import (
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
+    EVALUATE_INSTRUCTIONS
 )
 
 load_dotenv()
@@ -38,6 +39,10 @@ classification_agent = Agent(
     "openai:gpt-4.1-mini", output_type=BatchClassificationResult, retries=3
 )
 
+evaluation_agent = Agent(
+    "openai:gpt-4.1-mini", output_type=ClassificationReport, retries=3
+)
+
 # judge = Agent("openai:chatgpt-4.1-mini")
 
 curr_prompt = "Why do cat live do they happy life?"
@@ -54,20 +59,30 @@ def __build_optimizer_prompt(task_desc, optimize_job, output_schema):
     )
 
 
-def __build_generator_prompt(task_desc, generator_job, output_schema):
+def __build_generator_prompt(task_desc, generator_job, output_schema, optional_example="No Optional Examples for now"):
     return OPTIMIZER_DATA_GENERATOR.format(
         n=10,
         generator_job=json.dumps(task_desc, indent=2),
         task_description=json.dumps(generator_job, indent=2),
+        optional_examples=optional_example,
         output_schema=json.dumps(output_schema, indent=2),
+    )
+    
+def __build_evaluation_prompt(prompt, task_description, batch_predictions, ground_truth, output_schema):
+    return EVALUATE_INSTRUCTIONS.format(
+        n=len(batch_predictions.results),
+        prompt=prompt,
+        task_description=task_description,
+        batch_predictions=batch_predictions,
+        ground_truth=ground_truth,
+        output_schema=output_schema
     )
 
 
 def __build_classifier_prompt(prompt, batch, output_schema):
     return CLASSIFICATION_INSTRUCTIONS.format(
         prompt=prompt, batch=batch, output_schema=output_schema
-    )
-
+    )  
 
 def optimize(
     optimization_request: PromptOptimizationRequest, max_iteration=5
@@ -84,6 +99,11 @@ def optimize(
         generator_job=optimization_request.model_dump_json(),
         output_schema=DataGenerationOutput.model_json_schema(),
     )
+
+    with open("small_data.json", 'r') as f:
+        dataset = json.load(f)
+        
+    print(len(dataset)) 
 
     """
         TODO:
@@ -103,29 +123,37 @@ def optimize(
         print(f"Iteration: {i+1}")
         # call agent, get response and see if we should keep optimizing or not
         # result = agent.run_sync(curr_prompt)
-        gen_examples = generator_agent.run_sync(generator_prompt).output
-        print(gen_examples.examples)
+        # gen_examples = generator_agent.run_sync(generator_prompt).output
+        # print(gen_examples.examples)
+        
+        examples = [x['review'] for x in dataset]
+        ground_truth = [x['label'] for x in dataset]
+        print(examples[-2])
         batch_prediction_prompt = __build_classifier_prompt(
             prompt=optimization_request.prompt,
-            batch=json.dumps(gen_examples.examples), # dont give the model both the example and the labels, I think the AI will cheat
-            output_schema=ClassificationReport.model_json_schema(),
-        )
+            batch=json.dumps(examples), # dont give the model both the example and the labels, I think the AI will cheat
+            output_schema=BatchClassificationResult.model_json_schema(),
+        )    
         
+        print("=====Prediction======")
         batch_prediction_result = classification_agent.run_sync(batch_prediction_prompt).output
-        print(batch_prediction_result)
-        # eval_result = classification_agent.run_sync()
-        return
-        prompt_hist.append(result)
+        
+        eval_prompt = __build_evaluation_prompt(optimization_request.prompt, optimization_request.task_description, batch_prediction_result, ground_truth, ClassificationReport.model_json_schema())
+        
+        eval_result = evaluation_agent.run_sync(eval_prompt).output
+        
+        print(eval_result)
+        prompt_hist.append(eval_result)
         # if result.stop:
         #     print("Stopping")
         #     break
-        if result.output.stop:
-            print("Stopping iteration")
-            break
-        i += 1
+        # if eval_result.output.stop:
+        #     print("Stopping iteration")
+        #     break
+        # i += 1
         return
 
-    return result
+    return eval_result
 
 
 # print(

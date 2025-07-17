@@ -43,14 +43,15 @@ result:
 OPTIMIZER_DATA_GENERATOR = """ 
 You are an expert AI agent which generates very challenging and unique examples based on the given task description. 
 Your must generate {n} extremely challenging, realistic, and very different examples.
-Be sure that you do not accidentally attempt to classify your own generated examples.
+Be sure that you do not attempt to classify your own examples when creating this dataset.
 
-Each example must also adhere to the following rules exactly:
+Each example MUST adhere to the following rules exactly:
 
 1. Each example must be realistic to the task description. 
 2. The examples must be extremely challenging, and unique to previous examples.
-5. There must be an even number of positive and negative examples so we have a balanced dataset.
-6. The examples must not include an explanation of the example.
+3. The examples must be a challenge for even a powerful LLM to answer.
+4. There must be an even number of positive and negative examples so we have a balanced dataset.
+5. The examples must not include an explanation of the example.
 
 Here is the task description:
 
@@ -60,11 +61,15 @@ Below is the request for data generation format with field descriptions:
 
 {generator_job}
 
+Optional examples to base generation off of:
+
+{optional_examples}
 
 You must output in the following structured format:
 
 {output_schema}
 
+You MUST not attempt to explain or classify the given task in your output. Only generate novel challenging examples based on the rules above and task description given.
 result:
 """
 
@@ -90,28 +95,38 @@ Report:
 """
 
 EVALUATE_INSTRUCTIONS = """
-You are an expert prompt evaluation AI agent that must evaluate if the prompt
+You are an expert prompt evaluation AI agent that must evaluate the result of a batch of {n} predictions
+for a prompt on the given task description.
 
 Prompt:
 
-Accuracy: 
-{}
-
-Confusion Matrix: 
-{}
+{prompt}
 
 Task Description:
     
 {task_description}
 
+Batch to evaluate:
+
+{batch_predictions}
+
+Ground truth:
+
+{ground_truth}
+
 Instructions are as follows:
-1. Perform the task on the datapoint
-2. Generate a prediction based on the task. If the task doesnt not explain how to label the prediction, assume binary labels.
-3. Analyise the prompt to the datapoint and come up with a reason why this prompt may and may not work at predicting the label.
+
+1. You must precisely evaluate the batch taking care to note where the prompt could be improved.
+2. You must generate an accuracy score for the batch given the prediction and compare it to the ground truth label
+3. You must generate a confusion matrix based on the batch and ground truth labels
+4. You must come up with a series of suggested changes that will meaningfully improve the prompt.
 
 
 Structure the output like so:
-{classification_result}
+
+{output_schema}
+
+result:
 """
 
 class PromptOptimizationPolicy:
