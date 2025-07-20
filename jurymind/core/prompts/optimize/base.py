@@ -37,7 +37,6 @@ Output your results like so:
 
 {output_schema}
 
-result:
 """
 
 OPTIMIZER_DATA_GENERATOR = """ 
@@ -74,60 +73,89 @@ result:
 """
 
 CLASSIFICATION_INSTRUCTIONS = """
-You're task is to classify the following examples based on the prompts instructions. 
-Assume this is a binary classification task. You will classify the examples according to the prompt
-and generate the accuracy, confusion matrix, suggestions as to how to modify the prompt and why it failed, and list of failure cases
-from the dataset.
+You must perform classification on a batch of examples as defined in the prompt below. 
+You must generate a list of predictions 
 
-Task prompt: 
+Prompt: 
 
 {prompt}
 
-Batch to classify using the above task prompt:
+Batch of examples to classify:
    
 {batch}
 
-You must output your results to the following format:
+You must output your predictions in the following format:
 
 {output_schema}
 
-Report:
 """
 
 EVALUATE_INSTRUCTIONS = """
-You are an expert prompt evaluation AI agent that must evaluate the result of a batch of {n} predictions
-for a prompt on the given task description.
-
-Prompt:
-
-{prompt}
+Your job is to perform is building a report on how well the given prompt was able to perform
+the task_description defined below. You must take the predictions and compare them to the ground truth. 
 
 Task Description:
     
 {task_description}
 
-Batch to evaluate:
+Prompt:
 
-{batch_predictions}
+{prompt}
+
+Predictions by the LLM:
+
+{predictions}
 
 Ground truth:
 
 {ground_truth}
 
-Instructions are as follows:
+###
+Note that the ground-truth labels are __absolutely correct__, but the prompts (task description) may be incorrect and need modification.
+Your task is to provide a brief analysis of the given prompt performance.
+Guidelines:
+1. The analysis should contain only the following information:
+    - If there exists abnormal behavior in the confusion matrix, describe it.
+    - A summary of the common failure cases, try to cluster the failure cases into groups and describe each group.
+3. The total length of your analysis should be less than 200 token!
+###
 
-1. You must precisely evaluate the batch taking care to note where the prompt could be improved.
-2. You must generate an accuracy score for the batch given the prediction and compare it to the ground truth label
-3. You must generate a confusion matrix based on the batch and ground truth labels
-4. You must come up with a series of suggested changes that will meaningfully improve the prompt.
-
-
-Structure the output like so:
+You must format your report in this schema:
 
 {output_schema}
 
-result:
 """
+
+
+PROMPT_MODIFICATION = """
+
+Agent is a large language model whose task is to modify a prompt based on the evaluation 
+report from another agent. You must correct and modify the prompt based on the suggestions in the report.
+
+### Prompt History ###
+
+{prompt_history}
+
+### Current Prompt ###
+
+{current_prompt}
+
+### Modification Suggestions ###
+
+{suggestions}
+
+###Instructions###
+
+1. You will generate a new prompt based on the error analysis. 
+2. Follow the analysis suggestions exactly and a predicted score for this prompt.
+3. The new prompt must be different from all of the previous prompts.
+4. The new prompt must be modified to prevent the failure cases.
+
+You must follow the evaluation instructions! Do not deviate from the suggestions, even if they seem opposite to what
+you would do.
+
+"""
+
 
 class PromptOptimizationPolicy:
     """

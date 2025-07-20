@@ -66,11 +66,8 @@ class OptimizationRequest(BaseModel):
 
 class PromptOptimizationRequest(OptimizationRequest):
     prompt: str = Field(description="Prompt to be optimized by the agent")
-    examples: Optional[dict] = Field(
-        default=None,
-        description="Optional list of examples to better tune to specific tasks.",
-    )
-
+    task_description: str = Field(description="An explanation of the task the promt is attemtping to perform.")
+    iterations: int = Field(description="The number of iterations to perform the optimization on.")
 
 class OptimzationModelMap(BaseModel):
     # idea of some storage to keep prompt context around which could be brought back up for the LLM to use.
@@ -92,7 +89,9 @@ class DataGenerationOutput(BaseModel):
     examples: list[str] = Field(
         description="You list the generated examples here and DO NOT inlcude the label."
     )
-    labels: list[int] = Field(description="You put the labels here for the generated examples.")
+    labels: list[int] = Field(
+        description="You put the labels here for the generated examples."
+    )
 
 
 class SampleAnalysis(BaseModel):
@@ -104,51 +103,45 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    sample: str = Field(description="The sample that is to be classified according to the task.")
+    explanation: str = Field(description="Your explanation for why you made your prediction")
+    sample: str = Field(
+        description="The sample that is to be classified according to the task."
+    )
     prompt: str = Field(description="Prompt used to classify the sample.")
     prediction: int = Field(
-        description="Binary classification prediction of the example."
+        description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
     )
+    # ground_truth: int = Field(description="The actual ground truth classification label for the example.")
 
 
 class OptimizationStep(BaseModel):
     pass
 
 
-class OptimizationErrorReport(BaseModel):
-    examples: list[SampleAnalysis] = Field(
-        description="List of analysis for each sample from the dataset"
-    )
-    suggested_changes: str = Field(
-        description="List of changes that should be made to the original prompt to improve it according to the ."
-    )
-    accuracy: float = Field(
-        description="The accuracy percentage of the examples to the true label."
-    )
-    confusion_matrix: dict = Field(
-        description="Confusion matrix of the examples as a dictionary with the keys being TP, FP, TN, FN"
-    )
+class OptimizationStepResult(BaseModel):
+    modified_prompt: str = Field(description="The modified prompt you came up with to improve the prompt.")
+    explanation_of_changes: str = Field(description="You must give a reason for the changes you made and why it will work better.")
+
+
 
 class BatchClassificationResult(BaseModel):
-    results: list[ClassificationResult]
+    predictions: list[ClassificationResult]
     
-    
+
+
 class ClassificationReport(BaseModel):
     prompt: str = Field(
         description="The prompt that was used for the task on the examples."
     )
-    classification_results: list[ClassificationResult] = Field(
-        description="Classification results for each test example"
-    )
+    
     suggested_changes: str = Field(
-        description="Changes that should be made to the original prompt to improve its ability to perform the task."
+        description="Changes that should be made to the original prompt to improve its ability to perform the task. Should be itemized and given a good explanation for the suggestions."
     )
     accuracy: float = Field(
-        description="The accuracy percentage of the classification results to the true label."
+        description="The accuracy percentage of the classification results to the true label between 0 and 1."
     )
     confusion_matrix: dict = Field(
-        description="Confusion matrix of the classification results as a dictionary with the keys being TP, FP, TN, FN"
+        description="Confusion matrix of the predictions to the ground truth."
     )
-    failure_examples: list[ClassificationResult] = Field(
-        description="Examples that were misclassified with the prompt."
-    )
+    
+    incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified by the llm as a list of ClassificationResult objects.")

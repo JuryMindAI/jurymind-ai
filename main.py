@@ -11,14 +11,17 @@ from jurymind.core.models import (
     PromptOptimizationRequest,
     DataGenerationOutput,
     ClassificationReport,
-    BatchClassificationResult
+    BatchClassificationResult,
+    OptimizationStepResult,
 )
 
 from jurymind.core.prompts.optimize.base import (
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
-    EVALUATE_INSTRUCTIONS
+    EVALUATE_INSTRUCTIONS,
+    OPTIMIZER_INSTRUCTIONS,
+    PROMPT_MODIFICATION,
 )
 
 load_dotenv()
@@ -39,8 +42,10 @@ classification_agent = Agent(
     "openai:gpt-4.1-mini", output_type=BatchClassificationResult, retries=3
 )
 
-evaluation_agent = Agent(
-    "openai:gpt-4.1-mini", output_type=ClassificationReport, retries=3
+evaluation_agent = Agent("openai:gpt-4o", output_type=ClassificationReport, retries=3)
+
+modification_agent = Agent(
+    "openai:gpt-4.1", output_type=OptimizationStepResult, retries=3
 )
 
 # judge = Agent("openai:chatgpt-4.1-mini")
@@ -59,7 +64,12 @@ def __build_optimizer_prompt(task_desc, optimize_job, output_schema):
     )
 
 
-def __build_generator_prompt(task_desc, generator_job, output_schema, optional_example="No Optional Examples for now"):
+def __build_generator_prompt(
+    task_desc,
+    generator_job,
+    output_schema,
+    optional_example="No Optional Examples for now",
+):
     return OPTIMIZER_DATA_GENERATOR.format(
         n=10,
         generator_job=json.dumps(task_desc, indent=2),
@@ -67,43 +77,53 @@ def __build_generator_prompt(task_desc, generator_job, output_schema, optional_e
         optional_examples=optional_example,
         output_schema=json.dumps(output_schema, indent=2),
     )
-    
-def __build_evaluation_prompt(prompt, task_description, batch_predictions, ground_truth, output_schema):
+
+
+def __build_evaluation_prompt(
+    prompt, task_description, batch_predictions, ground_truth, output_schema
+):
     return EVALUATE_INSTRUCTIONS.format(
-        n=len(batch_predictions.results),
+        n=len(batch_predictions.predictions),
         prompt=prompt,
         task_description=task_description,
-        batch_predictions=batch_predictions,
+        predictions=batch_predictions,
         ground_truth=ground_truth,
-        output_schema=output_schema
+        output_schema=output_schema,
     )
 
 
 def __build_classifier_prompt(prompt, batch, output_schema):
     return CLASSIFICATION_INSTRUCTIONS.format(
         prompt=prompt, batch=batch, output_schema=output_schema
-    )  
+    )
+
+
+def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
+    return PROMPT_MODIFICATION.format(
+        prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
+    )
+
 
 def optimize(
     optimization_request: PromptOptimizationRequest, max_iteration=5
 ) -> OptimizationRunResult:
 
-    sys_prompt = __build_optimizer_prompt(
-        task_desc=json.dumps(PromptOptimizationRequest.model_json_schema(), indent=2),
-        optimize_job=json.dumps(optimization_request.model_dump_json(), indent=2),
-        output_schema=json.dumps(OptimizationStepResult.model_json_schema(), indent=2),
-    )
+    # sys_prompt = __build_optimizer_prompt(
+    #     task_desc=json.dumps(PromptOptimizationRequest.model_json_schema(), indent=2),
+    #     optimize_job=json.dumps(optimization_request.model_dump_json(), indent=2),
+    #     output_schema=json.dumps(OptimizationStepResult.model_json_schema(), indent=2),
+    # )
 
-    generator_prompt = __build_generator_prompt(
-        task_desc=PromptOptimizationRequest.model_json_schema(),
-        generator_job=optimization_request.model_dump_json(),
-        output_schema=DataGenerationOutput.model_json_schema(),
-    )
+    # generator_prompt = __build_generator_prompt(
+    #     task_desc=PromptOptimizationRequest.model_json_schema(),
+    #     generator_job=optimization_request.model_dump_json(),
+    #     output_schema=DataGenerationOutput.model_json_schema(),
+    # )
 
-    with open("small_data.json", 'r') as f:
+    with open("small_data.json", "r") as f:
         dataset = json.load(f)
-        
-    print(len(dataset)) 
+
+    print(len(dataset))
 
     """
         TODO:
@@ -117,7 +137,8 @@ def optimize(
             4. generate additional sample prompts based on the error report findings and go to step 1.
         5. return the optimized prompt
     """
-    curr_prompt = sys_prompt
+    curr_prompt = optimization_request.prompt
+
     i = 0
     while i < max_iteration:
         print(f"Iteration: {i+1}")
@@ -125,35 +146,48 @@ def optimize(
         # result = agent.run_sync(curr_prompt)
         # gen_examples = generator_agent.run_sync(generator_prompt).output
         # print(gen_examples.examples)
-        
-        examples = [x['review'] for x in dataset]
-        ground_truth = [x['label'] for x in dataset]
-        print(examples[-2])
+
+        examples = [x["review"] for x in dataset]
+        ground_truth = [x["label"] for x in dataset]
+
         batch_prediction_prompt = __build_classifier_prompt(
             prompt=optimization_request.prompt,
-            batch=json.dumps(examples), # dont give the model both the example and the labels, I think the AI will cheat
+            batch=json.dumps(
+                examples
+            ),  # dont give the model both the example and the labels, I think the AI will cheat
             output_schema=BatchClassificationResult.model_json_schema(),
-        )    
-        
-        print("=====Prediction======")
-        batch_prediction_result = classification_agent.run_sync(batch_prediction_prompt).output
-        
-        eval_prompt = __build_evaluation_prompt(optimization_request.prompt, optimization_request.task_description, batch_prediction_result, ground_truth, ClassificationReport.model_json_schema())
-        
-        eval_result = evaluation_agent.run_sync(eval_prompt).output
-        
-        print(eval_result)
-        prompt_hist.append(eval_result)
-        # if result.stop:
-        #     print("Stopping")
-        #     break
-        # if eval_result.output.stop:
-        #     print("Stopping iteration")
-        #     break
-        # i += 1
-        return
+        )
 
-    return eval_result
+        batch_prediction_result = classification_agent.run_sync(
+            batch_prediction_prompt
+        ).output
+
+        eval_prompt = __build_evaluation_prompt(
+            optimization_request.prompt,
+            optimization_request.task_description,
+            batch_prediction_result,
+            ground_truth,
+            ClassificationReport.model_json_schema(),
+        )
+
+        eval_result = evaluation_agent.run_sync(eval_prompt).output
+
+        prompt_hist.append(curr_prompt)
+
+        modfication_prompt = __build_optimizer_prompt(
+            prompt_hist,
+            curr_prompt,
+            eval_result.suggested_changes,
+        )
+        
+        optimization_step_result = modification_agent.run_sync(modfication_prompt).output
+        
+        curr_prompt = optimization_step_result.modified_prompt
+        i+=1
+        print(f"New version of prompt: {curr_prompt}")
+        print(f"Explanation for the changes: {optimization_step_result.explanation_of_changes}")
+
+    return prompt_hist, curr_prompt, optimization_step_result.explanation_of_changes
 
 
 # print(
@@ -168,13 +202,19 @@ def optimize(
 #     ).model_dump_json()
 # )
 
-result = optimize(
+history, optimized_prompt, explanation = optimize(
     PromptOptimizationRequest(
-        task_description="The task is aclassification task to check if a movie review has spoilers in them or not.",
-        prompt="Do these movie reviews contain spoilers? Response with a True or False.",
+        task_description="The task is a binary classification task to check if a review has spoilers in them or not.",
+        prompt="Do these movie reviews contain spoilers? You answer with a True or False.",
+        iterations=10
     )
 )
 
-print(result)
+print("### Optimized Prmpt###")
+print(optimized_prompt)
 print()
-# print(gen_result)
+print("###Optimization steps####")
+print(history)
+print()
+print("###Explanation for change###")
+print(explanation)
