@@ -42,10 +42,10 @@ classification_agent = Agent(
     "openai:gpt-4.1-mini", output_type=BatchClassificationResult, retries=3
 )
 
-evaluation_agent = Agent("openai:gpt-4o", output_type=ClassificationReport, retries=3)
+evaluation_agent = Agent("openai:gpt-4.1", output_type=ClassificationReport, retries=3)
 
 modification_agent = Agent(
-    "openai:gpt-4.1", output_type=OptimizationStepResult, retries=3
+    "openai:gpt-4.1-mini", output_type=OptimizationStepResult, retries=3
 )
 
 # judge = Agent("openai:chatgpt-4.1-mini")
