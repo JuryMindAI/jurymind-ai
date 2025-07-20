@@ -156,13 +156,12 @@ you would do.
 
 """
 
-
 class PromptOptimizationPolicy:
     """
     Optimization Policy for tuning prompts to a given task.
     """
 
-    def __init__(self, optimization_job, model="", max_epochs=1, num_workers=1):
+    def __init__(self, optimization_job_config, model="", max_epochs=1, num_workers=1):
         self.num_workers = num_workers
         self.max_epochs = max_epochs
         self.optimization_result = None
@@ -176,7 +175,10 @@ class PromptOptimizationPolicy:
             schema=json.dumps(schema, indent=2),
         )
 
-    def optimize(self, prompt):
+    def optimize(self):
+        """_summary_
+            Begins optimization of the requested job.
+        """
         pass
 
 
