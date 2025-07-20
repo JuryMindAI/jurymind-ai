@@ -20,17 +20,19 @@ class BasePipeline:
         self.policy = policy
 
 class OptimizationPipeline(BasePipeline):
-    """Higher level container for optimization workflows."""
+    """Higher level container for optimization workflows. The pipeline will run a series of steps and automatically log to mlflow each steps output."""
 
     def __init__(
         self,
         num_iterations=5,
-        policy: BasePolicy = None
+        steps: list[BasePolicy] = None
     ):
         self.num_iterations: int = num_iterations
-        self.steps: list = None # need to define this
+        self.steps: list = [] # need to define this
+    
+    
     def run(self):
-        pass
+        """Run each step in the pipeline and log results to mlflow"""
 
 
 class PromptOptimizationPolicy:
@@ -53,9 +55,9 @@ class PromptOptimizationPolicy:
         self.search_type = None  # grid, random, beam
         self.task_description: str = optimization_job_config.task_description
 
-    def optimize(self):
+    def step(self):
         """_summary_
-        Begins optimization of the requested job.
+            Perform a single step for the policy
         """
         pass
 
