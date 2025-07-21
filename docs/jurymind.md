@@ -1,3 +1,4 @@
 ## API Documentation
 
-:::jurymind
+:::jurymind.core.prompts.base
+:::jurymind.core.optimization.base
