@@ -1,4 +1,4 @@
 ## API Documentation
 
-:::jurymind.core
+:::jurymind.core.__init__
 :::jurymind.core
