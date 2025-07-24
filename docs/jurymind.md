@@ -1,4 +1,5 @@
 ## API Documentation
 
-:::jurymind.core.optimization.base options:members: -BaseOptimization-
+:::jurymind.core.optimization.base
+:::jurymind.core.models
 
