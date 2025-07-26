@@ -1,5 +1,7 @@
+site_name: JuryMind AI
 nav:
-  - Home:
+  - API:
+      - api.md
 plugins:
   - mkdocstrings:
       handlers:
