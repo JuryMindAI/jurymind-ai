@@ -11,7 +11,7 @@ nav:
 =======
 site_name: JuryMind AI
 nav:
-  - API:
+  - API Documentation:
       - api.md
 >>>>>>> 5b4c25a (setting up navigation)
 plugins:
