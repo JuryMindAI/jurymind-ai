@@ -2,16 +2,16 @@ from jurymind.core.models import PromptOptimizationRequest
 
 
 class BasePolicy:
-    """Base class for policy objects"""
+    """Base policy class all polcies inherit from"""
 
 
 class BaseOptimizer:
-    """Base optimizer class"""
+    """Base optimizer class all optimizers inherit from"""
 
     def __init__(self):
         pass
 
-    def optimize(self):
+    def optimize(self, input):
         pass
 
 class BasePipeline:
