@@ -1,5 +1,7 @@
+nav:
+  - Home:
 plugins:
-- mkdocstrings:
-    handlers:
-      python:
-        paths: [src]
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
