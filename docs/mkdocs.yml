@@ -1,6 +1,6 @@
 site_name: JuryMind AI
 nav:
-  - API:
+  - API Documentation:
       - api.md
 plugins:
   - mkdocstrings:
