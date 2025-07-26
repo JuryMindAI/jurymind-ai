@@ -3,7 +3,6 @@ import os
 
 from openai import OpenAI
 from jurymind.llm.base import BaseLLM
-from jurymind.core.prompts import DEFAULT_SYSTEM_PROMPT
 
 
 class OpenAILLM(BaseLLM):
@@ -39,16 +38,16 @@ class OpenAILLM(BaseLLM):
         # begin streaming the response back
 
     def __format_message(self, user_prompt, system_prompt=None):
-        message = [
-            {
-                "role": "system",
-                "content": (
-                    DEFAULT_SYSTEM_PROMPT if not system_prompt else system_prompt
-                ),
-            },
-            {"role": "user", "content": user_prompt},
-        ]
-        return message
+        # message = [
+        #     {
+        #         "role": "system",
+        #         "content": (
+        #             DEFAULT_SYSTEM_PROMPT if not system_prompt else system_prompt
+        #         ),
+        #     },
+        #     {"role": "user", "content": user_prompt},
+        # ]
+        return None
 
     async def acompletion(self, prompt):
         """Async support for OpenAI completions"""

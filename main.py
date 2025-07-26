@@ -4,25 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def main():
-    print("Hello from jurymind-ai!")
-    client = OpenAILLM(api_key="")
-    
-    response = client.completion("What is 2 + 2?")
-    
-    print(response)
-    
-    
-
-
-if __name__ == "__main__":
-    main()
 import os
 import asyncio
 import json
 
 # from jurymind.llm.openai import OpenAILLM
-from dotenv import load_dotenv
 from pydantic_ai import Agent
 from jurymind.core.models import (
     OptimizationStepResult,
@@ -34,7 +20,7 @@ from jurymind.core.models import (
     OptimizationStepResult,
 )
 
-from jurymind.core.prompts.optimize.base import (
+from jurymind.core.prompts.base import (
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
@@ -198,13 +184,17 @@ def optimize(
             curr_prompt,
             eval_result.suggested_changes,
         )
-        
-        optimization_step_result = modification_agent.run_sync(modfication_prompt).output
-        
+
+        optimization_step_result = modification_agent.run_sync(
+            modfication_prompt
+        ).output
+
         curr_prompt = optimization_step_result.modified_prompt
-        i+=1
-        print(f"New version of prompt: {curr_prompt}")
-        print(f"Explanation for the changes: {optimization_step_result.explanation_of_changes}")
+        i += 1
+        print(f"New version of prompt: \n{curr_prompt} \n")
+        print(
+            f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
+        )
 
     return prompt_hist, curr_prompt, optimization_step_result.explanation_of_changes
 
@@ -225,15 +215,15 @@ history, optimized_prompt, explanation = optimize(
     PromptOptimizationRequest(
         task_description="The task is a binary classification task to check if a review has spoilers in them or not.",
         prompt="Do these movie reviews contain spoilers? You answer with a True or False.",
-        iterations=10
+        iterations=10,
     )
 )
 
-print("### Optimized Prmpt###")
+print("### Optimized Prmpt###\n")
 print(optimized_prompt)
 print()
-print("###Optimization steps####")
+print("###Optimization steps####\n")
 print(history)
 print()
-print("###Explanation for change###")
+print("###Explanation for change###\n")
 print(explanation)

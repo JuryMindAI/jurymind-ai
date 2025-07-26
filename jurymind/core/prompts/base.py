@@ -22,8 +22,8 @@ result:
 """
 
 # only parameterize this part
-OPTIMIZER_TEMPLATE = """Your job is to optimize a prompt from a user. You optimize 
-by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the required task.
+OPTIMIZER_TEMPLATE = """Your job is to optimize a prompt. You optimize 
+by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the task described below.
 
 Below is the request to optimize format with field descriptions:
 
@@ -40,9 +40,13 @@ Output your results like so:
 """
 
 OPTIMIZER_DATA_GENERATOR = """ 
-You are an expert AI agent which generates very challenging and unique examples based on the given task description. 
-Your must generate {n} extremely challenging, realistic, and very different examples.
+You are an expert AI agent which generates very challenging and unique examples based on a task description. 
+Your must generate {n} extremely challenging, realistic, and very unique examples.
 Be sure that you do not attempt to classify your own examples when creating this dataset.
+
+Here is the task description:
+
+{task_description}
 
 Each example MUST adhere to the following rules exactly:
 
@@ -52,10 +56,6 @@ Each example MUST adhere to the following rules exactly:
 4. There must be an even number of positive and negative examples so we have a balanced dataset.
 5. The examples must not include an explanation of the example.
 
-Here is the task description:
-
-{task_description}
-
 Below is the request for data generation format with field descriptions:
 
 {generator_job}
@@ -64,17 +64,18 @@ Optional examples to base generation off of:
 
 {optional_examples}
 
+You MUST not attempt to explain or classify the given task in your output. Only generate novel challenging examples based on the rules above and task description given.
+
 You must output in the following structured format:
 
 {output_schema}
 
-You MUST not attempt to explain or classify the given task in your output. Only generate novel challenging examples based on the rules above and task description given.
 result:
 """
 
 CLASSIFICATION_INSTRUCTIONS = """
-You must perform classification on a batch of examples as defined in the prompt below. 
-You must generate a list of predictions 
+You perform classification on a batch of examples as defined in the prompt below. 
+You must generate a list of predictions based on the prompts instructions
 
 Prompt: 
 
@@ -151,41 +152,9 @@ report from another agent. You must correct and modify the prompt based on the s
 3. The new prompt must be different from all of the previous prompts.
 4. The new prompt must be modified to prevent the failure cases.
 
-You must follow the evaluation instructions! Do not deviate from the suggestions, even if they seem opposite to what
+You must follow the evaluation instructions exactly! Do not deviate from the suggestions, even if they seem opposite to what
 you would do.
 
 """
 
 
-class PromptOptimizationPolicy:
-    """
-    Optimization Policy for tuning prompts to a given task.
-    """
-
-    def __init__(self, optimization_job_config, model="", max_epochs=1, num_workers=1):
-        self.num_workers = num_workers
-        self.max_epochs = max_epochs
-        self.optimization_result = None
-        self.optimization_request = None
-        self.search_type = None  # grid, random, beam
-
-    def __build_optimizer_prompt(self, task_desc, optimize_job, schema):
-        return OPTIMIZER_TEMPLATE.format(
-            task_desc=json.dumps(task_desc, indent=2),
-            optimize_job=json.dumps(optimize_job, indent=2),
-            schema=json.dumps(schema, indent=2),
-        )
-
-    def optimize(self):
-        """_summary_
-            Begins optimization of the requested job.
-        """
-        pass
-
-
-class DataGenerationPolicy:
-    pass
-
-
-class LLMEvaluationPolicy:
-    pass
