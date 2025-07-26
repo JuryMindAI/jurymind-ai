@@ -12,27 +12,32 @@ class BaseOptimizer:
         pass
 
     def optimize(self, input):
+        """_summary_
+
+        Args:
+            input (_type_): _description_
+        """
         pass
 
+
 class BasePipeline:
+    """Base pipeline class all pipelines inherit from"""
+
     def __init__(self, num_iterations, policy):
         self.num_iterations = num_iterations
         self.policy = policy
 
+
 class OptimizationPipeline(BasePipeline):
     """Higher level container for optimization workflows. The pipeline will run a series of steps and automatically log to mlflow each steps output."""
 
-    def __init__(
-        self,
-        num_iterations=5,
-        steps: list[BasePolicy] = None
-    ):
+    def __init__(self, num_iterations=5, steps: list[BasePolicy] = None):
         self.num_iterations: int = num_iterations
-        self.steps: list = [] # need to define this
-    
-    
+        self.steps: list = []  # need to define this
+
     def run(self):
         """Run each step in the pipeline and log results to mlflow"""
+        pass
 
 
 class PromptOptimizationPolicy:
@@ -57,7 +62,7 @@ class PromptOptimizationPolicy:
 
     def step(self):
         """_summary_
-            Perform a single step for the policy
+        Perform a single step for the policy
         """
         pass
 
