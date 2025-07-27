@@ -22,6 +22,7 @@ from jurymind.core.models import (
 )
 
 from jurymind.core.prompts.base import (
+from jurymind.core.prompts.base import (
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
@@ -194,11 +195,16 @@ def optimize(
             modfication_prompt
         ).output
 
+
+        optimization_step_result = modification_agent.run_sync(
+            modfication_prompt
+        ).output
+
         curr_prompt = optimization_step_result.modified_prompt
         i += 1
         print(f"New version of prompt: \n{curr_prompt} \n")
         print(
-            f"Explanation for the changes: \n{optimization_step_result.explanation}\n"
+            f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
         )
 
     return prompt_hist, curr_prompt, optimization_step_result.explanation
@@ -225,10 +231,13 @@ history, optimized_prompt, explanation = optimize(
 )
 
 print("### Optimized Prmpt###\n")
+print("### Optimized Prmpt###\n")
 print(optimized_prompt)
 print()
 print("###Optimization steps####\n")
+print("###Optimization steps####\n")
 print(history)
 print()
+print("###Explanation for change###\n")
 print("###Explanation for change###\n")
 print(explanation)
