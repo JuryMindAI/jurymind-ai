@@ -104,7 +104,6 @@ class SampleAnalysis(BaseModel):
         description="A detailed and concise 2-3 sentence explanation of why you came to this analysis."
     )
     analysis: str
-    analysis: str
     prediction: int = Field(description="Boolean prediction of a sample of data.")
 
 
@@ -154,5 +153,4 @@ class ClassificationReport(BaseModel):
         description="Confusion matrix of the predictions to the ground truth."
     )
     
-    incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified as a list of ClassificationResult objects.")
     incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified as a list of ClassificationResult objects.")

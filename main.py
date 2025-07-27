@@ -2,8 +2,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+<<<<<<< HEAD
 import mlflow
 
+=======
+>>>>>>> 2ac6020 (Prompt optimization (#11))
 
 import os
 import asyncio
@@ -22,7 +25,10 @@ from jurymind.core.models import (
 )
 
 from jurymind.core.prompts.base import (
+<<<<<<< HEAD
 from jurymind.core.prompts.base import (
+=======
+>>>>>>> 2ac6020 (Prompt optimization (#11))
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
@@ -195,6 +201,17 @@ def optimize(
             modfication_prompt
         ).output
 
+        curr_prompt = optimization_step_result.modified_prompt
+        i += 1
+        print(f"New version of prompt: \n{curr_prompt} \n")
+        print(
+            f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
+        )
+
+        optimization_step_result = modification_agent.run_sync(
+            modfication_prompt
+        ).output
+
 
         optimization_step_result = modification_agent.run_sync(
             modfication_prompt
@@ -225,12 +242,17 @@ def optimize(
 history, optimized_prompt, explanation = optimize(
     PromptOptimizationRequest(
         task_description="The task is a binary classification task to check if a review has spoilers in them or not.",
+<<<<<<< HEAD
         prompt="Do these movie reviews contain spoilers? You answer with True or False.",
+=======
+        prompt="Do these movie reviews contain spoilers? You answer with a True or False.",
+>>>>>>> 2ac6020 (Prompt optimization (#11))
         iterations=10,
     )
 )
 
 print("### Optimized Prmpt###\n")
+<<<<<<< HEAD
 print("### Optimized Prmpt###\n")
 print(optimized_prompt)
 print()
@@ -240,4 +262,12 @@ print(history)
 print()
 print("###Explanation for change###\n")
 print("###Explanation for change###\n")
+=======
+print(optimized_prompt)
+print()
+print("###Optimization steps####\n")
+print(history)
+print()
+print("###Explanation for change###\n")
+>>>>>>> 2ac6020 (Prompt optimization (#11))
 print(explanation)

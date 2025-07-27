@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-site_name: JuryMind AI
-nav:
-  - API Documentation:
-      - api.md
-=======
 nav:
   - Home:
 >>>>>>> 97c88c6 (nav?)
