@@ -3,5 +3,11 @@ theme:
 site_name: JuryMindAi
 site_url: https://www.jurymindai.com
 
-plugins: 
-  - mkdocstrings
+nav:
+  - API Documentation:
+      - api.md
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [jurymind]
