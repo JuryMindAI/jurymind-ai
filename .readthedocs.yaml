@@ -22,7 +22,7 @@ build:
   # https://docs.readthedocs.io/page/guides/reproducible-builds.html
   jobs:
     pre_install:
-      - pip install mkdocs-material
+      - pip install -r docs/requirements.txt
 
 # Optionally, but recommended,
 # declare the Python requirements required to build your documentation

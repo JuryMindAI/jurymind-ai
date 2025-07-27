@@ -1,4 +1,4 @@
 mkdocs
-mkdocstrings[python]
-mkdocstrings
 mkdocs-material
+mkdocstrings
+mkdocstrings[python]

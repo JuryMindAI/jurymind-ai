@@ -1,0 +1,9 @@
+site_name: JuryMind AI
+nav:
+  - API Documentation:
+      - api.md
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]

@@ -15,9 +15,9 @@ class DefenseArgument(BaseModel):
 
 
 class JuryDecision(BaseModel):
-    decision: str
     explanation: str
-    confidence: float
+    decision: str
+    confidence: float 
 
 
 class JudgeDecision(BaseModel):
@@ -95,15 +95,15 @@ class DataGenerationOutput(BaseModel):
 
 
 class SampleAnalysis(BaseModel):
-    analysis: str
     reasoning: str = Field(
         description="A detailed and concise 2-3 sentence explanation of why you came to this analysis."
     )
+    analysis: str
     prediction: int = Field(description="Boolean prediction of a sample of data.")
 
 
 class ClassificationResult(BaseModel):
-    explanation: str = Field(description="Your explanation for why you made your prediction")
+    explanation: str = Field(description="Your explanation for why the prediction was made how it was.")
     sample: str = Field(
         description="The sample that is to be classified according to the task."
     )
@@ -111,7 +111,7 @@ class ClassificationResult(BaseModel):
     prediction: int = Field(
         description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
     )
-    # ground_truth: int = Field(description="The actual ground truth classification label for the example.")
+
 
 
 class OptimizationStep(BaseModel):
@@ -119,9 +119,9 @@ class OptimizationStep(BaseModel):
 
 
 class OptimizationStepResult(BaseModel):
-    modified_prompt: str = Field(description="The modified prompt you came up with to improve the prompt.")
     explanation_of_changes: str = Field(description="You must give a reason for the changes you made and why it will work better.")
-
+    modified_prompt: str = Field(description="The modified prompt you came up with to improve the prompt.")
+    
 
 
 class BatchClassificationResult(BaseModel):
@@ -144,4 +144,4 @@ class ClassificationReport(BaseModel):
         description="Confusion matrix of the predictions to the ground truth."
     )
     
-    incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified by the llm as a list of ClassificationResult objects.")
+    incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified as a list of ClassificationResult objects.")
