@@ -1,7 +1,7 @@
 theme:
   name: material
   palette:
-    scheme: slate
+    scheme: default
 site_name: JuryMindAi
 site_url: https://www.jurymindai.com
 
@@ -15,5 +15,3 @@ plugins:
       handlers:
         python:
           paths: [jurymind]
-
-      
