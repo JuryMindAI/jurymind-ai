@@ -58,17 +58,14 @@ class PromptOptimizationPolicy:
         search_type: SearchType = SearchType.GREEDY,
     ):
         """
-        __init__ _summary_
         Initializes the PromptOptimization policy
-
-        _extended_summary_
 
         Args:
             optimization_config (PromptOptimizationRequest): _description_
-            model (_type_, optional): _description_. Defaults to "openai:gpt-4.1-mini".
-            iterations (int, optional): _description_. Defaults to 1.
-            num_workers (int, optional): _description_. Defaults to 1.
-            search_type (SearchType, optional): _description_. Defaults to SearchType.GREEDY.
+            model (_type_, optional): LLM model to be used for optmimizing. Defaults to "openai:gpt-4.1-mini".
+            iterations (int, optional): Number of iterations to perform optimization. Defaults to 1.
+            num_workers (int, optional): Number of parallel workers to use during the optimization process. Mostly helps for Beam search. Defaults to 1.
+            search_type (SearchType, optional): Which search to use for optimizing the Prompt. Defaults to SearchType.GREEDY.
         """
         self.num_workers: int = num_workers
         self.iterations: int = iterations
