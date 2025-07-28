@@ -17,7 +17,7 @@ class DefenseArgument(BaseModel):
 class JuryDecision(BaseModel):
     explanation: str
     decision: str
-    confidence: float 
+    confidence: float
 
 
 class JudgeDecision(BaseModel):
@@ -66,8 +66,16 @@ class OptimizationRequest(BaseModel):
 
 class PromptOptimizationRequest(OptimizationRequest):
     prompt: str = Field(description="Prompt to be optimized by the agent")
-    task_description: str = Field(description="An explanation of the task the promt is attemtping to perform.")
-    iterations: int = Field(description="The number of iterations to perform the optimization on.")
+    examples: Optional[list[str]] = Field(
+        None, description="Optional examples to include for the policy to test against."
+    )
+    task_description: str = Field(
+        description="An explanation of the task the promt is attemtping to perform."
+    )
+    iterations: int = Field(
+        description="The number of iterations to perform the optimization on."
+    )
+
 
 class OptimzationModelMap(BaseModel):
     # idea of some storage to keep prompt context around which could be brought back up for the LLM to use.
@@ -103,7 +111,9 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    explanation: str = Field(description="Your explanation for why the prediction was made how it was.")
+    explanation: str = Field(
+        description="Your explanation for why the prediction was made how it was."
+    )
     sample: str = Field(
         description="The sample that is to be classified according to the task."
     )
@@ -113,27 +123,28 @@ class ClassificationResult(BaseModel):
     )
 
 
-
 class OptimizationStep(BaseModel):
     pass
 
 
 class OptimizationStepResult(BaseModel):
-    explanation_of_changes: str = Field(description="You must give a reason for the changes you made and why it will work better.")
-    modified_prompt: str = Field(description="The modified prompt you came up with to improve the prompt.")
-    
+    explanation_of_changes: str = Field(
+        description="You must give a reason for the changes you made and why it will work better."
+    )
+    modified_prompt: str = Field(
+        description="The modified prompt you came up with to improve the prompt."
+    )
 
 
 class BatchClassificationResult(BaseModel):
     predictions: list[ClassificationResult]
-    
 
 
 class ClassificationReport(BaseModel):
     prompt: str = Field(
         description="The prompt that was used for the task on the examples."
     )
-    
+
     suggested_changes: str = Field(
         description="Changes that should be made to the original prompt to improve its ability to perform the task. Should be itemized and given a good explanation for the suggestions."
     )
@@ -143,5 +154,7 @@ class ClassificationReport(BaseModel):
     confusion_matrix: dict = Field(
         description="Confusion matrix of the predictions to the ground truth."
     )
-    
-    incorrect: list[ClassificationResult] = Field(description="You put the examples that were incorrectly classified as a list of ClassificationResult objects.")
+
+    incorrect: list[ClassificationResult] = Field(
+        description="You put the examples that were incorrectly classified as a list of ClassificationResult objects."
+    )

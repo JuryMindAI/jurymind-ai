@@ -1,7 +1,17 @@
 theme:
   name: material
+  palette:
+    scheme: default
 site_name: JuryMindAi
 site_url: https://www.jurymindai.com
 
-plugins: 
-  - mkdocstrings
+nav:
+  - API Documentation:
+      - core.md
+      # - prompts.md
+      # - pipelines.md
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [jurymind]
