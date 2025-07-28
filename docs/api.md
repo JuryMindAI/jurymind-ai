@@ -1,1 +1,0 @@
-::: jurymind.core.optimization.base
