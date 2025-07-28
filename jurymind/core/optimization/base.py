@@ -1,4 +1,11 @@
 from jurymind.core.models import PromptOptimizationRequest
+from enum import Enum, auto
+
+
+class SearchType(Enum):
+    GREEDY = auto()
+    BEAM = auto()
+    RANDOM = auto()
 
 
 class BasePolicy:
@@ -41,30 +48,47 @@ class OptimizationPipeline(BasePipeline):
 
 
 class PromptOptimizationPolicy:
-    """
-    Optimization Policy for tuning prompts to a given task.
-    """
 
     def __init__(
         self,
-        optimization_job_config: PromptOptimizationRequest,
-        model="",
-        max_epochs=1,
-        num_workers=1,
+        optimization_config: PromptOptimizationRequest,
+        model: str = "openai:gpt-4.1-mini",
+        iterations: int = 1,
+        num_workers: int = 1,
+        search_type: SearchType = SearchType.GREEDY,
     ):
-        self.num_workers = num_workers
-        self.max_epochs = max_epochs
+        """
+        __init__ _summary_
+        Initializes the PromptOptimization policy
+
+        _extended_summary_
+
+        Args:
+            optimization_config (PromptOptimizationRequest): _description_
+            model (_type_, optional): _description_. Defaults to "openai:gpt-4.1-mini".
+            iterations (int, optional): _description_. Defaults to 1.
+            num_workers (int, optional): _description_. Defaults to 1.
+            search_type (SearchType, optional): _description_. Defaults to SearchType.GREEDY.
+        """
+        self.num_workers: int = num_workers
+        self.iterations: int = iterations
         self.model: str = model
         self.optimization_result = None
         self.optimization_request = None
-        self.search_type = None  # grid, random, beam
-        self.task_description: str = optimization_job_config.task_description
+        self.search_type = search_type  # grid, random, beam
+        self.task_description: str = optimization_config.task_description
 
-    def step(self):
+    def optimize(self):
         """_summary_
-        Perform a single step for the policy
+        Optimization call for the policy given an initial prompt and optional examples
         """
-        pass
+        step = 0
+
+        # iterate till we hit max epochs
+        while step < self.max_epochs:
+            pass
+
+        return next_prompt_step, step_history
 
 
 class DataGenerationPolicy:

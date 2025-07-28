@@ -5,7 +5,9 @@ site_url: https://www.jurymindai.com
 
 nav:
   - API Documentation:
-      - api.md
+      - core.md
+      - prompts.md
+      - pipelines.md
 plugins:
   - mkdocstrings:
       handlers:
