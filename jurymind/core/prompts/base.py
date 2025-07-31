@@ -113,12 +113,12 @@ Ground truth:
 
 ###
 Note that the ground-truth labels are __absolutely correct__, but the prompts (task description) may be incorrect and need modification.
-Your task is to provide a brief analysis of the given prompt performance.
-Guidelines:
+
+Analysis guidelines:
 1. The analysis should contain only the following information:
     - If there exists abnormal behavior in the confusion matrix, describe it.
     - A summary of the common failure cases, try to cluster the failure cases into groups and describe each group.
-3. The total length of your analysis should be less than 200 token!
+3. The total length of your analysis should be less than 200 tokens!
 ###
 
 You must format your report in this schema:
@@ -130,8 +130,8 @@ You must format your report in this schema:
 
 PROMPT_MODIFICATION = """
 
-Agent is a large language model whose task is to modify a prompt based on the evaluation 
-report from another agent. You must correct and modify the prompt based on the suggestions in the report.
+Agent is a large language model whose task is to modify a prompt based on a given evaluation from another LLM. 
+You must correct and modify the prompt based on the suggestions in the evaluation.
 
 ### Prompt History ###
 
@@ -147,8 +147,8 @@ report from another agent. You must correct and modify the prompt based on the s
 
 ###Instructions###
 
-1. You will generate a new prompt based on the error analysis. 
-2. Follow the analysis suggestions exactly and a predicted score for this prompt.
+1. You will generate a new prompt based on the evaluation results. 
+2. Follow the analysis suggestions exactly and add a predicted score for this prompt.
 3. The new prompt must be different from all of the previous prompts.
 4. The new prompt must be modified to prevent the failure cases.
 

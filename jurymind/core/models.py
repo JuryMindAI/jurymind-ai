@@ -90,7 +90,7 @@ class DataGenerationOutput(BaseModel):
         description="You list the generated examples here and DO NOT inlcude the label."
     )
     labels: list[int] = Field(
-        description="You put the labels here for the generated examples."
+        description="You put the labels here for the examples based on your prediction."
     )
 
 
@@ -103,7 +103,7 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    explanation: str = Field(description="Your explanation for why the prediction was made how it was.")
+    explanation: str = Field(description="Your explanation for reasons why the prediction was made how it was.")
     sample: str = Field(
         description="The sample that is to be classified according to the task."
     )
@@ -119,8 +119,8 @@ class OptimizationStep(BaseModel):
 
 
 class OptimizationStepResult(BaseModel):
-    explanation_of_changes: str = Field(description="You must give a reason for the changes you made and why it will work better.")
-    modified_prompt: str = Field(description="The modified prompt you came up with to improve the prompt.")
+    explanation: str = Field(description="You must give a reason for the changes you made and why it will work better.")
+    modified_prompt: str = Field(description="The modified prompt you came up with to improve the original promptt.")
     
 
 

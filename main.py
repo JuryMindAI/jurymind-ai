@@ -193,10 +193,10 @@ def optimize(
         i += 1
         print(f"New version of prompt: \n{curr_prompt} \n")
         print(
-            f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
+            f"Explanation for the changes: \n{optimization_step_result.explanation}\n"
         )
 
-    return prompt_hist, curr_prompt, optimization_step_result.explanation_of_changes
+    return prompt_hist, curr_prompt, optimization_step_result.explanation
 
 
 # print(
