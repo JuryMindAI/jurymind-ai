@@ -111,6 +111,7 @@ class ClassificationResult(BaseModel):
     prediction: int = Field(
         description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
     )
+    confidence_score: int = Field(description="Your confidence in your prdiction from 1 to 5. 1 is not confident at all and 5 is fully confident.")
 
 
 
@@ -121,6 +122,7 @@ class OptimizationStep(BaseModel):
 class OptimizationStepResult(BaseModel):
     explanation: str = Field(description="You must give a reason for the changes you made and why it will work better.")
     modified_prompt: str = Field(description="The modified prompt you came up with to improve the original promptt.")
+    confidence: str = Field(description="Your confidence level between 1 to 5 that the new prompt will perform better than the previous one.")
     
 
 
@@ -137,9 +139,11 @@ class ClassificationReport(BaseModel):
     suggested_changes: str = Field(
         description="Changes that should be made to the original prompt to improve its ability to perform the task. Should be itemized and given a good explanation for the suggestions."
     )
+    
     accuracy: float = Field(
         description="The accuracy percentage of the classification results to the true label between 0 and 1."
     )
+    
     confusion_matrix: dict = Field(
         description="Confusion matrix of the predictions to the ground truth."
     )

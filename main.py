@@ -1,7 +1,8 @@
-from jurymind.llm.openai import OpenAILLM
 from dotenv import load_dotenv
 
 load_dotenv()
+
+import mlflow
 
 
 import os
@@ -30,7 +31,6 @@ from jurymind.core.prompts.base import (
 )
 
 load_dotenv()
-
 agent = Agent(
     "openai:gpt-4.1-mini",
     output_type=OptimizationStepResult,
@@ -60,7 +60,10 @@ prompt_hist = []
 i = 0
 max_iteration = 10
 
+mlflow.pydantic_ai.autolog()
+mlflow.set_tracking_uri('http://0.0.0.0:8080')
 
+mlflow.set_experiment("PydanticAI")
 def __build_optimizer_prompt(task_desc, optimize_job, output_schema):
     return OPTIMIZER_TEMPLATE.format(
         task_desc=json.dumps(task_desc, indent=2),

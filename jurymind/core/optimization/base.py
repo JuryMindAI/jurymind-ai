@@ -62,7 +62,7 @@ class PromptOptimizationPolicy:
 
     def step(self):
         """_summary_
-        Perform a single step for the policy
+        Perform a single step for this policy
         """
         pass
 
