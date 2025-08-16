@@ -111,9 +111,11 @@ def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
         prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
     )
 
+def __build_workflow()
+
 
 def optimize(
-    optimization_request: PromptOptimizationRequest, max_iteration=5
+    optimization_request: PromptOptimizationRequest, task_examples=None, max_iteration=5
 ) -> OptimizationRunResult:
 
     # sys_prompt = __build_optimizer_prompt(
@@ -127,7 +129,7 @@ def optimize(
     #     generator_job=optimization_request.model_dump_json(),
     #     output_schema=DataGenerationOutput.model_json_schema(),
     # )
-
+    
     with open("small_data.json", "r") as f:
         dataset = json.load(f)
 
@@ -217,7 +219,7 @@ def optimize(
 history, optimized_prompt, explanation = optimize(
     PromptOptimizationRequest(
         task_description="The task is a binary classification task to check if a review has spoilers in them or not.",
-        prompt="Do these movie reviews contain spoilers? You answer with a True or False.",
+        prompt="Do these movie reviews contain spoilers? You answer with True or False.",
         iterations=10,
     )
 )

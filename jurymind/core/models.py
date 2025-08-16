@@ -65,9 +65,9 @@ class OptimizationRequest(BaseModel):
 
 
 class PromptOptimizationRequest(OptimizationRequest):
-    prompt: str = Field(description="Prompt to be optimized by the agent")
-    task_description: str = Field(description="An explanation of the task the promt is attemtping to perform.")
-    iterations: int = Field(description="The number of iterations to perform the optimization on.")
+    prompt: str = Field(description="Prompt that you are to optimize.")
+    task_description: str = Field(description="An explanation of the task the prompt is attemtping to perform.")
+    iterations: int = Field(description="The number of iterations to optimize for.")
 
 class OptimzationModelMap(BaseModel):
     # idea of some storage to keep prompt context around which could be brought back up for the LLM to use.
@@ -75,6 +75,9 @@ class OptimzationModelMap(BaseModel):
         description="Dictionary of params to help a model stay tuned to the task. IE. prompt plus any additional domain information."
     )
 
+class TaskExample:
+    example: str
+    label: str
 
 class DataPoint(BaseModel):
     example: str = Field(
