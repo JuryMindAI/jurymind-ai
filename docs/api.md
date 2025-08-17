@@ -1,1 +1,2 @@
-:::jurymind.core
+## API Documentation
+:::jurymind.core.optimization.base
