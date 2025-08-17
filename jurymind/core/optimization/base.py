@@ -39,33 +39,48 @@ class OptimizationPipeline(BasePipeline):
         """Run each step in the pipeline and log results to mlflow"""
         pass
 
-
+        
 class PromptOptimizationPolicy:
     """
-    Optimization Policy for tuning prompts to a given task.
-    """
+    Policy to optimize a prompt to a specific task.
+    """  
 
     def __init__(
         self,
         optimization_job_config: PromptOptimizationRequest,
-        model="",
-        max_epochs=1,
+        model="openai:gpt-5-mini-2025-08-07",
+        max_epochs=10,
         num_workers=1,
+        search_type="greedy"
     ):
+        """Initialize prompt optimization policy class
+
+        Args:
+            optimization_job_config (PromptOptimizationRequest): _description_
+            model (str, optional): LLM to use for optimizing the prompt. Defaults to "gpt-5-mini-2025-08-07".
+            max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
+            num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
+            search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
+        """               
         self.num_workers = num_workers
         self.max_epochs = max_epochs
         self.model: str = model
         self.optimization_result = None
-        self.optimization_request = None
-        self.search_type = None  # grid, random, beam
+        self.search_type: str = search_type  # greedy, beam
         self.task_description: str = optimization_job_config.task_description
 
     def step(self):
         """_summary_
         Perform a single step for this policy
         """
-        pass
+        
+        # set up the agents
 
+class GreedyOptimizer:
+    pass
+
+class BeamSearchOptimizer:
+    pass
 
 class DataGenerationPolicy:
     pass
