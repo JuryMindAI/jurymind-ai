@@ -52,11 +52,11 @@ class OptimizationPipeline(BasePipeline):
         pass
         pass
 
-        
+
 class PromptOptimizationPolicy:
     """
     Policy to optimize a prompt to a specific task.
-    """  
+    """
 
     def __init__(
         self,
@@ -64,7 +64,7 @@ class PromptOptimizationPolicy:
         model="openai:gpt-5-mini-2025-08-07",
         max_epochs=10,
         num_workers=1,
-        search_type="greedy"
+        search_type="greedy",
     ):
         """Initialize prompt optimization policy class
 
@@ -74,7 +74,7 @@ class PromptOptimizationPolicy:
             max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
-        """               
+        """
         self.num_workers = num_workers
         self.max_epochs = max_epochs
         self.model: str = model
@@ -87,14 +87,17 @@ class PromptOptimizationPolicy:
         Perform a single step for the policy
         Perform a single step for this policy
         """
-        
+
         # set up the agents
+
 
 class GreedyOptimizer:
     pass
 
+
 class BeamSearchOptimizer:
     pass
+
 
 class DataGenerationPolicy:
     pass
