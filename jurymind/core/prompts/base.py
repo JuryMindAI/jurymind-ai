@@ -157,4 +157,52 @@ you would do.
 
 """
 
+# TODO: Probably put these elsewhere but for now keep here
 
+def build_optimizer_prompt(task_desc, optimize_job, output_schema):
+    return OPTIMIZER_TEMPLATE.format(
+        task_desc=json.dumps(task_desc, indent=2),
+        optimize_job=json.dumps(optimize_job, indent=2),
+        output_schema=json.dumps(output_schema, indent=2),
+    )
+
+
+def build_generator_prompt(
+    task_desc,
+    generator_job,
+    output_schema,
+    optional_example="No Optional Examples for now",
+    n=10
+):
+    return OPTIMIZER_DATA_GENERATOR.format(
+        n=n,
+        generator_job=json.dumps(task_desc, indent=2),
+        task_description=json.dumps(generator_job, indent=2),
+        optional_examples=optional_example,
+        output_schema=json.dumps(output_schema, indent=2),
+    )
+
+
+def build_evaluation_prompt(
+    prompt, task_description, batch_predictions, ground_truth, output_schema
+):
+    return EVALUATE_INSTRUCTIONS.format(
+        n=len(batch_predictions.predictions),
+        prompt=prompt,
+        task_description=task_description,
+        predictions=batch_predictions,
+        ground_truth=ground_truth,
+        output_schema=output_schema,
+    )
+
+
+def build_classifier_prompt(prompt, batch, output_schema):
+    return CLASSIFICATION_INSTRUCTIONS.format(
+        prompt=prompt, batch=batch, output_schema=output_schema
+    )
+
+
+def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
+    return PROMPT_MODIFICATION.format(
+        prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
+    )
