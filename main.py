@@ -1,8 +1,12 @@
-from jurymind.llm.openai import OpenAILLM
 from dotenv import load_dotenv
 
 load_dotenv()
 
+<<<<<<< HEAD
+import mlflow
+
+=======
+>>>>>>> 2ac6020 (Prompt optimization (#11))
 
 import os
 import asyncio
@@ -21,6 +25,10 @@ from jurymind.core.models import (
 )
 
 from jurymind.core.prompts.base import (
+<<<<<<< HEAD
+from jurymind.core.prompts.base import (
+=======
+>>>>>>> 2ac6020 (Prompt optimization (#11))
     OPTIMIZER_TEMPLATE,
     OPTIMIZER_DATA_GENERATOR,
     CLASSIFICATION_INSTRUCTIONS,
@@ -30,7 +38,6 @@ from jurymind.core.prompts.base import (
 )
 
 load_dotenv()
-
 agent = Agent(
     "openai:gpt-4.1-mini",
     output_type=OptimizationStepResult,
@@ -60,7 +67,10 @@ prompt_hist = []
 i = 0
 max_iteration = 10
 
+mlflow.pydantic_ai.autolog()
+mlflow.set_tracking_uri('http://0.0.0.0:8080')
 
+mlflow.set_experiment("PydanticAI")
 def __build_optimizer_prompt(task_desc, optimize_job, output_schema):
     return OPTIMIZER_TEMPLATE.format(
         task_desc=json.dumps(task_desc, indent=2),
@@ -108,9 +118,11 @@ def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
         prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
     )
 
+def __build_workflow()
+
 
 def optimize(
-    optimization_request: PromptOptimizationRequest, max_iteration=5
+    optimization_request: PromptOptimizationRequest, task_examples=None, max_iteration=5
 ) -> OptimizationRunResult:
 
     # sys_prompt = __build_optimizer_prompt(
@@ -124,7 +136,7 @@ def optimize(
     #     generator_job=optimization_request.model_dump_json(),
     #     output_schema=DataGenerationOutput.model_json_schema(),
     # )
-
+    
     with open("small_data.json", "r") as f:
         dataset = json.load(f)
 
@@ -196,7 +208,23 @@ def optimize(
             f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
         )
 
-    return prompt_hist, curr_prompt, optimization_step_result.explanation_of_changes
+        optimization_step_result = modification_agent.run_sync(
+            modfication_prompt
+        ).output
+
+
+        optimization_step_result = modification_agent.run_sync(
+            modfication_prompt
+        ).output
+
+        curr_prompt = optimization_step_result.modified_prompt
+        i += 1
+        print(f"New version of prompt: \n{curr_prompt} \n")
+        print(
+            f"Explanation for the changes: \n{optimization_step_result.explanation_of_changes}\n"
+        )
+
+    return prompt_hist, curr_prompt, optimization_step_result.explanation
 
 
 # print(
@@ -214,16 +242,33 @@ def optimize(
 history, optimized_prompt, explanation = optimize(
     PromptOptimizationRequest(
         task_description="The task is a binary classification task to check if a review has spoilers in them or not.",
+<<<<<<< HEAD
+        prompt="Do these movie reviews contain spoilers? You answer with True or False.",
+=======
         prompt="Do these movie reviews contain spoilers? You answer with a True or False.",
+>>>>>>> 2ac6020 (Prompt optimization (#11))
         iterations=10,
     )
 )
 
 print("### Optimized Prmpt###\n")
+<<<<<<< HEAD
+print("### Optimized Prmpt###\n")
 print(optimized_prompt)
 print()
+print("###Optimization steps####\n")
 print("###Optimization steps####\n")
 print(history)
 print()
 print("###Explanation for change###\n")
+print("###Explanation for change###\n")
+=======
+print(optimized_prompt)
+print()
+print("###Optimization steps####\n")
+print("###Optimization steps####\n")
+print(history)
+print()
+print("###Explanation for change###\n")
+>>>>>>> 2ac6020 (Prompt optimization (#11))
 print(explanation)
