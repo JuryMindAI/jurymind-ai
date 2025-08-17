@@ -66,10 +66,9 @@ class OptimizationRequest(BaseModel):
     )
 
 
-class PromptOptimizationRequest(OptimizationRequest):
+class PromptOptimizationConfig(OptimizationRequest):
     prompt: str = Field(description="Prompt that you are to optimize.")
     task_description: str = Field(description="An explanation of the task the prompt is attemtping to perform.")
-    iterations: int = Field(description="The number of iterations to optimize for.")
 
 class OptimzationModelMap(BaseModel):
     # idea of some storage to keep prompt context around which could be brought back up for the LLM to use.
