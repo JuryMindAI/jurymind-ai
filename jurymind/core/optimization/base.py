@@ -1,3 +1,20 @@
+import json
+from jurymind.core.prompts.base import (
+    build_classifier_prompt,
+    build_evaluation_prompt,
+    build_generator_prompt,
+    build_optimizer_prompt,
+)
+from jurymind.core.models import (
+    BatchClassificationResult,
+    PromptOptimizationRunResult,
+    ClassificationReport,
+    ClassificationResult,
+    OptimizationRunResult,
+    OptimizationStepResult,
+)
+from pydantic_ai import Agent
+
 
 class BasePolicy:
     """Base policy class all polcies inherit from"""
@@ -39,6 +56,7 @@ class PromptOptimizationPolicy(BasePolicy):
         prompt: str,
         task_description: str,
         model: str = "openai:gpt-5-mini-2025-08-07",
+        evaluator_model: str = "openai:gpt-5-mini-2025-08-07",
         max_epochs: int = 10,
         num_workers: int = 1,
         search_type: int = "greedy",
@@ -46,7 +64,8 @@ class PromptOptimizationPolicy(BasePolicy):
         """Initialize prompt optimization policy
 
         Args:
-            optimization_job_config (PromptOptimizationRequest): _description_
+            prompt (str): Prompt to optimize in this policy.
+            task_description (str): Description of the task we are optimizing the prompt for.
             model (str, optional): LLM to use for optimizing the prompt. Defaults to "gpt-5-mini-2025-08-07".
             max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
@@ -56,33 +75,56 @@ class PromptOptimizationPolicy(BasePolicy):
         self.task_description: str = task_description
         self.num_workers: int = num_workers
         self.max_epochs: int = max_epochs
-        self.model: str = model
+        self.agent_model: str = model
+        self.evaluator_model: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
         self._step_history: list
+        self._modified_prompt: str = None
+        self.__classification_agent = classification_agent = Agent(
+            self.model, output_type=BatchClassificationResult, retries=3
+        )
+        self.__evaluation_agent = Agent(
+            "openai:gpt-4.1", output_type=ClassificationReport, retries=3
+        )
 
-    def _step(self):
-        """
-        Perform a single step update for the policy
-        """
-        return None
+        self.__modification_agent = Agent(
+            "openai:gpt-4.1-mini", output_type=OptimizationStepResult, retries=3
+        )
 
     def run(self, task_examples=None):
-        # runs the policy
+        # runs the workflow for this policy
         i = 0
+        # each step holds the current prompt
+        current_prompt = self.prompt
         while i < self.max_epochs:
             i += 1
             self._step()
 
-            examples = [x["review"] for x in dataset]
-            ground_truth = [x["label"] for x in dataset]
+            if task_examples:
+                examples = [x["review"] for x in task_examples]
+                ground_truth = [x["label"] for x in task_examples]
 
-            batch_prediction_prompt = __build_classifier_prompt(
-                prompt=optimization_request.prompt,
+            batch_prediction_prompt = build_classifier_prompt(
+                prompt=current_prompt,
                 batch=json.dumps(
                     examples
                 ),  # dont give the model both the example and the labels, I think the AI will cheat
                 output_schema=BatchClassificationResult.model_json_schema(),
             )
+
+            batch_prediction_result = self.classification_agent.run_sync(
+                batch_prediction_prompt
+            ).output
+
+            eval_prompt = build_evaluation_prompt(
+                current_prompt,
+                self.task_description,
+                batch_prediction_result,
+                ground_truth,
+                ClassificationReport.model_json_schema(),
+            )
+
+        eval_result = evaluation_agent.run_sync(eval_prompt).output
 
 
 # class PromptOptimizer:
