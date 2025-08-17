@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 site_name: JuryMind AI
 nav:
   - API Documentation:
@@ -7,6 +8,12 @@ nav:
 nav:
   - Home:
 >>>>>>> 97c88c6 (nav?)
+=======
+site_name: JuryMind AI
+nav:
+  - API:
+      - api.md
+>>>>>>> 5b4c25a (setting up navigation)
 plugins:
   - mkdocstrings:
       handlers:
