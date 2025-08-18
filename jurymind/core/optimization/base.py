@@ -81,26 +81,28 @@ class PromptOptimizationPolicy(BasePolicy):
         self.step_history: list = []
         self._modified_prompt: str = None
         self.__classification_agent = Agent(
-            self.model, output_type=BatchClassificationResult, retries=3
+            self.agent_model, output_type=BatchClassificationResult, retries=3
         )
         self.__evaluation_agent = Agent(
-            "openai:gpt-4.1", output_type=ClassificationReport, retries=3
+            self.evaluator_model, output_type=ClassificationReport, retries=3
         )
 
         self.__modification_agent = Agent(
-            "openai:gpt-4.1-mini", output_type=OptimizationStepResult, retries=3
+            self.agent_model, output_type=OptimizationStepResult, retries=3
         )
 
     def run(self, task_examples=None):
         # runs the workflow for this policy
-        i = 0
+        epoch = 0
         # each step holds the current prompt
         current_prompt = self.prompt
         
-        while i < self.max_epochs:
-            i += 1
+        while epoch < self.max_epochs:
+            
             self._step()
 
+            examples = []
+            ground_truth = []
             if task_examples:
                 examples = [x["review"] for x in task_examples]
                 ground_truth = [x["label"] for x in task_examples]
@@ -139,27 +141,10 @@ class PromptOptimizationPolicy(BasePolicy):
                 modfication_prompt
             ).output
 
-            curr_prompt = optimization_step_result.modified_prompt
-            i += 1
-            print(f"New version of prompt: \n{curr_prompt} \n")
-            print(
-                f"Explanation for the changes: \n{optimization_step_result.explanation}\n"
-            )
-
-            optimization_step_result = self.__modification_agent.run_sync(
-                modfication_prompt
-            ).output
-
-            optimization_step_result = self.__modification_agent.run_sync(
-                modfication_prompt
-            ).output
-
-            curr_prompt = optimization_step_result.modified_prompt
-
-
-# class PromptOptimizer:
-#     def __init__(self, policy: PromptOptimizationPolicy):
-
+            current_prompt = optimization_step_result.modified_prompt
+            
+            epoch += 1
+            
 
 class GreedyOptimizer:
     pass
