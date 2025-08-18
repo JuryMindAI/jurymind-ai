@@ -12,6 +12,7 @@ from jurymind.core.models import (
     ClassificationResult,
     OptimizationRunResult,
     OptimizationStepResult,
+    TaskExample
 )
 from pydantic_ai import Agent
 
@@ -91,7 +92,12 @@ class PromptOptimizationPolicy(BasePolicy):
             self.agent_model, output_type=OptimizationStepResult, retries=3
         )
 
-    def run(self, task_examples=None):
+    def run(self, task_examples: list[TaskExample] = None):
+        """Run the optimization steps for this policy.
+
+        Args:
+            task_examples (_type_, optional): Optional list of TaskExample's. Defaults to None and forces model to generate examples solely based on the task_description.
+        """        
         # runs the workflow for this policy
         epoch = 0
         # each step holds the current prompt
