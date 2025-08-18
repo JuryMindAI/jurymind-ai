@@ -12,7 +12,7 @@ from jurymind.core.models import (
     ClassificationResult,
     OptimizationRunResult,
     OptimizationStepResult,
-    TaskExample
+    TaskExample,
 )
 from pydantic_ai import Agent
 
@@ -60,7 +60,8 @@ class PromptOptimizationPolicy(BasePolicy):
         evaluator_model: str = "openai:gpt-5-mini-2025-08-07",
         max_epochs: int = 10,
         num_workers: int = 1,
-        search_type: int = "greedy",
+        search_type: str = "greedy",
+        track_mlflow: bool = True
     ):
         """Initialize prompt optimization policy
 
@@ -71,6 +72,7 @@ class PromptOptimizationPolicy(BasePolicy):
             max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
+            track_mlflow (bool, optional): Use mlflow tracking. Defaults to True.
         """
         self.original_prompt: str = prompt
         self.task_description: str = task_description
@@ -92,27 +94,32 @@ class PromptOptimizationPolicy(BasePolicy):
             self.agent_model, output_type=OptimizationStepResult, retries=3
         )
 
-    def run(self, task_examples: list[TaskExample] = None):
+    def run(
+        self,
+        task_examples: list[TaskExample] = None,
+        evaluation_data: list[TaskExample] = None,
+    ):
         """Run the optimization steps for this policy.
 
         Args:
-            task_examples (_type_, optional): Optional list of TaskExample's. Defaults to None and forces model to generate examples solely based on the task_description.
-        """        
+            task_examples (_type_, optional): Optional list of TaskExample's to help generate new examples from. Defaults to None
+        """
         # runs the workflow for this policy
         epoch = 0
         # each step holds the current prompt
         current_prompt = self.prompt
-        
+
         while epoch < self.max_epochs:
-            
+
             self._step()
 
             examples = []
             ground_truth = []
+
             if task_examples:
                 examples = [x["review"] for x in task_examples]
                 ground_truth = [x["label"] for x in task_examples]
-
+                
             batch_prediction_prompt = build_classifier_prompt(
                 prompt=current_prompt,
                 batch=json.dumps(
@@ -121,7 +128,7 @@ class PromptOptimizationPolicy(BasePolicy):
                 output_schema=BatchClassificationResult.model_json_schema(),
             )
 
-            batch_prediction_result = self.classification_agent.run_sync(
+            batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
 
@@ -148,17 +155,20 @@ class PromptOptimizationPolicy(BasePolicy):
             ).output
 
             current_prompt = optimization_step_result.modified_prompt
-            
+
             epoch += 1
-            
+
         self._modified_prompt = current_prompt
-            
+
     def get_step_history(self):
         return self.step_history
-    
+
     def get_optimized_prompt(self):
         return self._modified_prompt
-            
+    
+    def __store_history_to_file(self):
+        pass
+
 
 class GreedyOptimizer:
     pass
