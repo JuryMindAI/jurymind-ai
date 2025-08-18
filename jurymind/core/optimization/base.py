@@ -71,7 +71,7 @@ class PromptOptimizationPolicy(BasePolicy):
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
         """
-        self.prompt: str = prompt
+        self.original_prompt: str = prompt
         self.task_description: str = task_description
         self.num_workers: int = num_workers
         self.max_epochs: int = max_epochs
@@ -79,7 +79,7 @@ class PromptOptimizationPolicy(BasePolicy):
         self.evaluator_model: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
         self.step_history: list = []
-        self._modified_prompt: str = None
+        self._modified_prompt: str = self.original_prompt
         self.__classification_agent = Agent(
             self.agent_model, output_type=BatchClassificationResult, retries=3
         )
@@ -144,6 +144,14 @@ class PromptOptimizationPolicy(BasePolicy):
             current_prompt = optimization_step_result.modified_prompt
             
             epoch += 1
+            
+        self._modified_prompt = current_prompt
+            
+    def get_step_history(self):
+        return self.step_history
+    
+    def get_optimized_prompt(self):
+        return self._modified_prompt
             
 
 class GreedyOptimizer:
