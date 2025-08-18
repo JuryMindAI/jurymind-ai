@@ -1,4 +1,5 @@
 import json
+import mlflow
 from jurymind.core.prompts.base import (
     build_classifier_prompt,
     build_evaluation_prompt,
@@ -61,7 +62,9 @@ class PromptOptimizationPolicy(BasePolicy):
         max_epochs: int = 10,
         num_workers: int = 1,
         search_type: str = "greedy",
-        track_mlflow: bool = True
+        track_mlflow: bool = True,
+        task_examples: list[TaskExample] = None,
+        evaluation_examples: list[TaskExample] = None 
     ):
         """Initialize prompt optimization policy
 
@@ -73,6 +76,8 @@ class PromptOptimizationPolicy(BasePolicy):
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
             track_mlflow (bool, optional): Use mlflow tracking. Defaults to True.
+            task_examples (list[TaskExample], optional): Optional list of TaskExample's to help generate new examples from. Defaults to None.
+            evaluation_examples (list[TaskExample], optional): Optional list of TaskExample's to use as a test set for evaluate the prompts on. Defaults to None
         """
         self.original_prompt: str = prompt
         self.task_description: str = task_description
@@ -96,13 +101,11 @@ class PromptOptimizationPolicy(BasePolicy):
 
     def run(
         self,
-        task_examples: list[TaskExample] = None,
-        evaluation_data: list[TaskExample] = None,
     ):
         """Run the optimization steps for this policy.
 
         Args:
-            task_examples (_type_, optional): Optional list of TaskExample's to help generate new examples from. Defaults to None
+            
         """
         # runs the workflow for this policy
         epoch = 0
