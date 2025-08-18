@@ -78,9 +78,9 @@ class PromptOptimizationPolicy(BasePolicy):
         self.agent_model: str = model
         self.evaluator_model: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
-        self._step_history: list
+        self.step_history: list = []
         self._modified_prompt: str = None
-        self.__classification_agent = classification_agent = Agent(
+        self.__classification_agent = Agent(
             self.model, output_type=BatchClassificationResult, retries=3
         )
         self.__evaluation_agent = Agent(
@@ -96,6 +96,7 @@ class PromptOptimizationPolicy(BasePolicy):
         i = 0
         # each step holds the current prompt
         current_prompt = self.prompt
+        
         while i < self.max_epochs:
             i += 1
             self._step()
@@ -124,7 +125,36 @@ class PromptOptimizationPolicy(BasePolicy):
                 ClassificationReport.model_json_schema(),
             )
 
-        eval_result = evaluation_agent.run_sync(eval_prompt).output
+            eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+
+            self.step_history.append(current_prompt)
+
+            modfication_prompt = build_optimizer_prompt(
+                self.step_history,
+                current_prompt,
+                eval_result.suggested_changes,
+            )
+
+            optimization_step_result = self.__modification_agent.run_sync(
+                modfication_prompt
+            ).output
+
+            curr_prompt = optimization_step_result.modified_prompt
+            i += 1
+            print(f"New version of prompt: \n{curr_prompt} \n")
+            print(
+                f"Explanation for the changes: \n{optimization_step_result.explanation}\n"
+            )
+
+            optimization_step_result = self.__modification_agent.run_sync(
+                modfication_prompt
+            ).output
+
+            optimization_step_result = self.__modification_agent.run_sync(
+                modfication_prompt
+            ).output
+
+            curr_prompt = optimization_step_result.modified_prompt
 
 
 # class PromptOptimizer:
