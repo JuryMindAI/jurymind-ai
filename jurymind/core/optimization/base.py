@@ -1,5 +1,6 @@
 import json
 import mlflow
+from loguru import logger
 from jurymind.core.prompts.base import (
     build_classifier_prompt,
     build_evaluation_prompt,
@@ -59,7 +60,7 @@ class PromptOptimizationPolicy(BasePolicy):
         task_description: str,
         model: str = "openai:gpt-5-mini-2025-08-07",
         evaluator_model: str = "openai:gpt-5-mini-2025-08-07",
-        max_epochs: int = 10,
+        max_epochs: int = 5,
         num_workers: int = 1,
         search_type: str = "greedy",
         track_mlflow: bool = True,
@@ -86,8 +87,12 @@ class PromptOptimizationPolicy(BasePolicy):
         self.agent_model: str = model
         self.evaluator_model: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
-        self.step_history: list = []
+        self.policy_optimization_history: list = []
+        self.task_examples: list[TaskExample] = task_examples
+        self.evalaution_examples: list[TaskExample] = evaluation_examples
         self._modified_prompt: str = self.original_prompt
+        
+        # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
             self.agent_model, output_type=BatchClassificationResult, retries=3
         )
@@ -103,38 +108,31 @@ class PromptOptimizationPolicy(BasePolicy):
         self,
     ):
         """Run the optimization steps for this policy.
-
-        Args:
-            
         """
+        logger.info("Beginning start of optimization policy execution.")
         # runs the workflow for this policy
         epoch = 0
         # each step holds the current prompt
-        current_prompt = self.prompt
-
+        current_prompt = self.original_prompt
+        
+        examples = [x.example for x in self.evalaution_examples]
+        ground_truth = [x.label for x in self.evalaution_examples]
+        
         while epoch < self.max_epochs:
-
-            self._step()
-
-            examples = []
-            ground_truth = []
-
-            if task_examples:
-                examples = [x["review"] for x in task_examples]
-                ground_truth = [x["label"] for x in task_examples]
-                
+            logger.info(f"Beginning epoch {epoch}/{self.max_epochs}")
             batch_prediction_prompt = build_classifier_prompt(
                 prompt=current_prompt,
                 batch=json.dumps(
                     examples
-                ),  # dont give the model both the example and the labels, I think the AI will cheat
+                ),  # dont give the model both the example and the labels, the llm may try to cheat.
                 output_schema=BatchClassificationResult.model_json_schema(),
             )
-
+            
+            logger.info("Beginning batch prediction.")
             batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
-
+            logger.info("Batch prediction results complete. Begining eval.")
             eval_prompt = build_evaluation_prompt(
                 current_prompt,
                 self.task_description,
@@ -145,10 +143,10 @@ class PromptOptimizationPolicy(BasePolicy):
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
 
-            self.step_history.append(current_prompt)
+            self.policy_optimization_history.append(eval_result.prompt)
 
             modfication_prompt = build_optimizer_prompt(
-                self.step_history,
+                self.policy_optimization_history,
                 current_prompt,
                 eval_result.suggested_changes,
             )
@@ -158,13 +156,13 @@ class PromptOptimizationPolicy(BasePolicy):
             ).output
 
             current_prompt = optimization_step_result.modified_prompt
-
+            logger.info(f"Epoch {epoch}: Finished round of optimization. \n Evaluation accuracy: {eval_result.accuracy}")
             epoch += 1
-
+            
         self._modified_prompt = current_prompt
 
     def get_step_history(self):
-        return self.step_history
+        return self.policy_optimization_history
 
     def get_optimized_prompt(self):
         return self._modified_prompt
@@ -175,7 +173,7 @@ class PromptOptimizationPolicy(BasePolicy):
 
 class GreedyOptimizer:
     pass
-
+ 
 
 class BeamSearchOptimizer:
     pass
