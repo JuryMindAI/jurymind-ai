@@ -107,8 +107,6 @@ class SampleAnalysis(BaseModel):
     reasoning: str = Field(
         description="A detailed and concise 2-3 sentence explanation of why you came to this analysis."
     )
-    analysis: str
-    analysis: str
     prediction: int = Field(description="Boolean prediction of a sample of data.")
 
 
@@ -116,8 +114,6 @@ class ClassificationResult(BaseModel):
     explanation: str = Field(
         description="Your explanation for why the prediction was made how it was."
     )
-    sample: str = Field(description="The sample that was classified.")
-    prompt: str = Field(description="Prompt used to classify the sample.")
     prediction: int = Field(
         description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
     )
@@ -153,12 +149,9 @@ class ClassificationReport(BaseModel):
 
     accuracy: float = Field(
         description="The accuracy percentage of the classification results to the true label between 0 and 1."
-    )
-
+    )    
+    
     confusion_matrix: dict = Field(
         description="Confusion matrix of the predictions to the ground truth."
     )
 
-    incorrect: list[ClassificationResult] = Field(
-        description="You put the examples that were incorrectly classified as a list of ClassificationResult objects."
-    )

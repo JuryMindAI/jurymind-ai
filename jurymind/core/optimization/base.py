@@ -58,8 +58,8 @@ class PromptOptimizationPolicy(BasePolicy):
         self,
         prompt: str,
         task_description: str,
-        model: str = "openai:gpt-5-mini-2025-08-07",
-        evaluator_model: str = "openai:gpt-5-mini-2025-08-07",
+        model: str = "openai:gpt-4.1-mini",
+        evaluator_model: str = "openai:gpt-4.1-mini",
         max_epochs: int = 5,
         num_workers: int = 1,
         search_type: str = "greedy",
@@ -132,6 +132,7 @@ class PromptOptimizationPolicy(BasePolicy):
             batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
+            
             logger.info("Batch prediction results complete. Begining eval.")
             eval_prompt = build_evaluation_prompt(
                 current_prompt,
@@ -142,7 +143,8 @@ class PromptOptimizationPolicy(BasePolicy):
             )
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
-
+            logger.info(eval_result)
+            
             self.policy_optimization_history.append(eval_result.prompt)
 
             modfication_prompt = build_optimizer_prompt(
@@ -154,6 +156,8 @@ class PromptOptimizationPolicy(BasePolicy):
             optimization_step_result = self.__modification_agent.run_sync(
                 modfication_prompt
             ).output
+            
+            logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(f"Epoch {epoch}: Finished round of optimization. \n Evaluation accuracy: {eval_result.accuracy}")
