@@ -100,7 +100,7 @@ class PromptOptimizationPolicy(BasePolicy):
             self.evaluator_model, output_type=ClassificationReport, retries=3
         )
 
-        self.__generation_agent = Agent(self.agent_model, output_type=)
+        # self.__generation_agent = Agent(self.agent_model, output_type=)
 
         self.__modification_agent = Agent(
             self.agent_model, output_type=OptimizationStepResult, retries=3
@@ -126,7 +126,6 @@ class PromptOptimizationPolicy(BasePolicy):
                 batch=json.dumps(
                     examples
                 ),  # dont give the model both the example and the labels, the llm may try to cheat.
-                output_schema=BatchClassificationResult.model_json_schema(),
             )
 
             logger.info("Beginning batch prediction.")
@@ -146,7 +145,7 @@ class PromptOptimizationPolicy(BasePolicy):
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
             logger.info(eval_result)
 
-            self.policy_optimization_history.append(eval_result.prompt)
+            self.policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
                 self.policy_optimization_history,

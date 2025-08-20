@@ -85,10 +85,7 @@ You must generate a list of predictions based on the prompts instructions
    
 {batch}
 
-### You must output your predictions in the following format:
-
-{output_schema}
-
+Result:
 """
 
 EVALUATE_INSTRUCTIONS = """
@@ -191,9 +188,9 @@ def build_evaluation_prompt(
     )
 
 
-def build_classifier_prompt(prompt, batch, output_schema):
+def build_classifier_prompt(prompt, batch):
     return CLASSIFICATION_INSTRUCTIONS.format(
-        prompt=prompt, batch=batch, output_schema=output_schema
+        prompt=prompt, batch=batch
     )
 
 
