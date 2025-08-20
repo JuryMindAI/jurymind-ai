@@ -65,7 +65,7 @@ class PromptOptimizationPolicy(BasePolicy):
         search_type: str = "greedy",
         track_mlflow: bool = True,
         task_examples: list[TaskExample] = None,
-        evaluation_examples: list[TaskExample] = None 
+        evaluation_examples: list[TaskExample] = None,
     ):
         """Initialize prompt optimization policy
 
@@ -91,7 +91,7 @@ class PromptOptimizationPolicy(BasePolicy):
         self.task_examples: list[TaskExample] = task_examples
         self.evalaution_examples: list[TaskExample] = evaluation_examples
         self._modified_prompt: str = self.original_prompt
-        
+
         # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
             self.agent_model, output_type=BatchClassificationResult, retries=3
@@ -100,6 +100,8 @@ class PromptOptimizationPolicy(BasePolicy):
             self.evaluator_model, output_type=ClassificationReport, retries=3
         )
 
+        self.__generation_agent = Agent(self.agent_model, output_type=)
+
         self.__modification_agent = Agent(
             self.agent_model, output_type=OptimizationStepResult, retries=3
         )
@@ -107,17 +109,16 @@ class PromptOptimizationPolicy(BasePolicy):
     def run(
         self,
     ):
-        """Run the optimization steps for this policy.
-        """
+        """Run the optimization steps for this policy."""
         logger.info("Beginning start of optimization policy execution.")
         # runs the workflow for this policy
         epoch = 0
         # each step holds the current prompt
         current_prompt = self.original_prompt
-        
+
         examples = [x.example for x in self.evalaution_examples]
         ground_truth = [x.label for x in self.evalaution_examples]
-        
+
         while epoch < self.max_epochs:
             logger.info(f"Beginning epoch {epoch}/{self.max_epochs}")
             batch_prediction_prompt = build_classifier_prompt(
@@ -127,12 +128,12 @@ class PromptOptimizationPolicy(BasePolicy):
                 ),  # dont give the model both the example and the labels, the llm may try to cheat.
                 output_schema=BatchClassificationResult.model_json_schema(),
             )
-            
+
             logger.info("Beginning batch prediction.")
             batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
-            
+
             logger.info("Batch prediction results complete. Begining eval.")
             eval_prompt = build_evaluation_prompt(
                 current_prompt,
@@ -144,7 +145,7 @@ class PromptOptimizationPolicy(BasePolicy):
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
             logger.info(eval_result)
-            
+
             self.policy_optimization_history.append(eval_result.prompt)
 
             modfication_prompt = build_optimizer_prompt(
@@ -156,13 +157,15 @@ class PromptOptimizationPolicy(BasePolicy):
             optimization_step_result = self.__modification_agent.run_sync(
                 modfication_prompt
             ).output
-            
+
             logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
 
             current_prompt = optimization_step_result.modified_prompt
-            logger.info(f"Epoch {epoch}: Finished round of optimization. \n Evaluation accuracy: {eval_result.accuracy}")
+            logger.info(
+                f"Epoch {epoch}: Finished round of optimization. \n Evaluation accuracy: {eval_result.accuracy}"
+            )
             epoch += 1
-            
+
         self._modified_prompt = current_prompt
 
     def get_step_history(self):
@@ -170,14 +173,14 @@ class PromptOptimizationPolicy(BasePolicy):
 
     def get_optimized_prompt(self):
         return self._modified_prompt
-    
+
     def __store_history_to_file(self):
         pass
 
 
 class GreedyOptimizer:
     pass
- 
+
 
 class BeamSearchOptimizer:
     pass

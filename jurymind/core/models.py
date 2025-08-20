@@ -82,7 +82,9 @@ class OptimzationModelMap(BaseModel):
 
 class TaskExample(BaseModel):
     example: str = Field(description="Example for a task.")
-    label: int = Field(description="Label for the outcome of the task. If its a binary classification task the label may be true or false.")
+    label: int = Field(
+        description="Label for the outcome of the task. If its a binary classification task the label may be true or false."
+    )
 
 
 class DataPoint(BaseModel):
@@ -139,19 +141,15 @@ class BatchClassificationResult(BaseModel):
 
 
 class ClassificationReport(BaseModel):
-    prompt: str = Field(
-        description="The prompt that was used for the task on the examples."
-    )
 
     suggested_changes: str = Field(
         description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list."
     )
 
     accuracy: float = Field(
-        description="The accuracy percentage of the classification results to the true label between 0 and 1."
-    )    
-    
+        description="The accuracy percentage of the classification results."
+    )
+
     confusion_matrix: dict = Field(
         description="Confusion matrix of the predictions to the ground truth."
     )
-
