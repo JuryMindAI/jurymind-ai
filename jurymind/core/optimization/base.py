@@ -100,7 +100,7 @@ class PromptOptimizationPolicy(BasePolicy):
             self.evaluator_model, output_type=ClassificationReport, retries=3
         )
 
-        self.__generation_agent = Agent(self.agent_model, output_type=)
+        # self.__generation_agent = Agent(self.agent_model, output_type=)
 
         self.__modification_agent = Agent(
             self.agent_model, output_type=OptimizationStepResult, retries=3
@@ -144,6 +144,7 @@ class PromptOptimizationPolicy(BasePolicy):
             )
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+            logger.info("Eval Result: \n")
             logger.info(eval_result)
 
             self.policy_optimization_history.append(eval_result.prompt)
@@ -158,7 +159,9 @@ class PromptOptimizationPolicy(BasePolicy):
                 modfication_prompt
             ).output
 
-            logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
+            logger.info(
+                f"\n=====MODIFIED PROMPT=====\n{optimization_step_result.modified_prompt}\n\n"
+            )
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(
