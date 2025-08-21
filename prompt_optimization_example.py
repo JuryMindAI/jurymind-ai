@@ -16,12 +16,12 @@ if __name__ == "__main__":
     for elm in dataset:
         task_examples.append(TaskExample(example=elm['review'], label=elm['label']))
         
-    policy = PromptOptimizationPolicy("Do these movie reviews contain spoilers? You answer with True or False.", 
+    policy = PromptOptimizationPolicy("Classify the following data to see if they contain spoilers or not.", 
                                       "The task is a binary classification task to check if a review has spoilers in them or not.",
                                       evaluation_examples=task_examples)
     
     policy.run()
     
-    print(policy.original_prompt)
+    print(policy.get_step_history())
     print()
     print(policy.get_optimized_prompt())

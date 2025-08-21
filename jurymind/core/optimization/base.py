@@ -126,7 +126,6 @@ class PromptOptimizationPolicy(BasePolicy):
                 batch=json.dumps(
                     examples
                 ),  # dont give the model both the example and the labels, the llm may try to cheat.
-                output_schema=BatchClassificationResult.model_json_schema(),
             )
 
             logger.info("Beginning batch prediction.")
@@ -147,7 +146,7 @@ class PromptOptimizationPolicy(BasePolicy):
             logger.info("Eval Result: \n")
             logger.info(eval_result)
 
-            self.policy_optimization_history.append(eval_result.prompt)
+            self.policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
                 self.policy_optimization_history,
