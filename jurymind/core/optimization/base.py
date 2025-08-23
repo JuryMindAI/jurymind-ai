@@ -143,6 +143,7 @@ class PromptOptimizationPolicy(BasePolicy):
             )
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+            logger.info("Eval Result: \n")
             logger.info(eval_result)
 
             self.policy_optimization_history.append(current_prompt)
@@ -157,7 +158,9 @@ class PromptOptimizationPolicy(BasePolicy):
                 modfication_prompt
             ).output
 
-            logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
+            logger.info(
+                f"\n=====MODIFIED PROMPT=====\n{optimization_step_result.modified_prompt}\n\n"
+            )
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(
