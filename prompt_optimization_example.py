@@ -16,7 +16,7 @@ if __name__ == "__main__":
         task_examples.append(TaskExample(example=elm["review"], label=elm["label"]))
 
     policy = PromptOptimizationPolicy(
-        "Classify the following data to see if they contain spoilers or not.",
+        "Classify the following data to see if they contain spoilers or not. Label should be 0 or 1.",
         "The task is a binary classification task to check if a review has spoilers in them or not.",
         evaluation_examples=task_examples,
     )

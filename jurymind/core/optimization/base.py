@@ -151,7 +151,7 @@ class PromptOptimizationPolicy(BasePolicy):
             modfication_prompt = build_optimizer_prompt(
                 self.policy_optimization_history,
                 current_prompt,
-                OptimizationStepResult.model_dump_json(),
+                OptimizationStepResult.model_json_schema(),
             )
 
             optimization_step_result = self.__modification_agent.run_sync(
