@@ -37,13 +37,13 @@ class OptimizationStepResult(BaseModel):
         description="Field to store the optimized prompt the agent rewrote."
     )
     original_prompt: str = Field(
-        description="Orginal prompt that the agent was given to optimize."
+        description="Orginal prompt that was to be optimize."
     )
     reason: str = Field(
         description="Detailed explanation for the changes and why the changes were needed."
     )
     confidence_score: str = Field(
-        description="Score based on the Likert scale between 1 to 5 on how confident you are in the change being better than previous prompt."
+        description="Likert scale between 1 to 5 on how confident you are in the change being better than the previous prompt."
     )
     stop: bool
 
@@ -81,9 +81,9 @@ class OptimzationModelMap(BaseModel):
 
 
 class TaskExample(BaseModel):
-    example: str = Field(description="Example for a task.")
+    example: str = Field(description="Example to use for the Task.")
     label: int = Field(
-        description="Label for the outcome of the task. If its a binary classification task the label may be true or false."
+        description="Label of the example for the given task."
     )
 
 
