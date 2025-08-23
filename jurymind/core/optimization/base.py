@@ -1,22 +1,22 @@
+"""
+Classes and functions to run different opmtimization tasks.
+"""
+
 import json
-import mlflow
+
+from pydantic_ai import Agent
 from loguru import logger
 from jurymind.core.prompts.base import (
     build_classifier_prompt,
     build_evaluation_prompt,
-    build_generator_prompt,
     build_optimizer_prompt,
 )
 from jurymind.core.models import (
     BatchClassificationResult,
-    PromptOptimizationRunResult,
     ClassificationReport,
-    ClassificationResult,
-    OptimizationRunResult,
     OptimizationStepResult,
     TaskExample,
 )
-from pydantic_ai import Agent
 
 
 class BasePolicy:
@@ -112,14 +112,14 @@ class PromptOptimizationPolicy(BasePolicy):
         """Run the optimization steps for this policy."""
         logger.info("Beginning start of optimization policy execution.")
         # runs the workflow for this policy
-        epoch = 0
+        epoch = 1
         # each step holds the current prompt
         current_prompt = self.original_prompt
 
         examples = [x.example for x in self.evalaution_examples]
         ground_truth = [x.label for x in self.evalaution_examples]
 
-        while epoch < self.max_epochs:
+        while epoch <= self.max_epochs:
             logger.info(f"Beginning epoch {epoch}/{self.max_epochs}")
             batch_prediction_prompt = build_classifier_prompt(
                 prompt=current_prompt,
@@ -128,7 +128,7 @@ class PromptOptimizationPolicy(BasePolicy):
                 ),  # dont give the model both the example and the labels, the llm may try to cheat.
             )
 
-            logger.info("Beginning batch prediction.")
+            logger.info("Beginning batch prediction step.")
             batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
@@ -143,24 +143,22 @@ class PromptOptimizationPolicy(BasePolicy):
             )
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
-            logger.info("Eval Result: \n")
-            logger.info(eval_result)
+
+            logger.info(f"Evaluation Result: {eval_result}")
 
             self.policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
                 self.policy_optimization_history,
                 current_prompt,
-                eval_result.suggested_changes,
+                OptimizationStepResult.model_dump_json(),
             )
 
             optimization_step_result = self.__modification_agent.run_sync(
                 modfication_prompt
             ).output
 
-            logger.info(
-                f"\n=====MODIFIED PROMPT=====\n{optimization_step_result.modified_prompt}\n\n"
-            )
+            logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(
