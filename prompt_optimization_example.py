@@ -13,6 +13,9 @@ if __name__ == "__main__":
     with open("small_data.json", "r") as f:
         dataset = json.load(f)
 
+    def scorer(expected_result, output_result):
+        return True
+
     task_examples = []  # todo build factory method for this
     for elm in dataset:
         task_examples.append(TaskExample(example=elm["review"], label=elm["label"]))

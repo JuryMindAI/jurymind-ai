@@ -50,7 +50,6 @@ class OptimizationPipeline(BasePipeline):
         self.steps: list = []  # need to define this
 
     def run(self):
- 
         """Run each step in the pipeline and log results to mlflow"""
 
 
@@ -69,11 +68,12 @@ class PromptOptimizer(BasePolicy):
         num_workers: int = 1,
         search_type: str = "greedy",
         track_mlflow: bool = False,
-        task_examples: list[TaskExample] = None,
+        training_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
+        scoring_metrics: list = None,
     ):
         """
-        Initialize prompt optimization 
+        Initialize prompt optimization
 
         Args:
             prompt (str): Prompt to optimize in this policy.
@@ -90,13 +90,13 @@ class PromptOptimizer(BasePolicy):
         self.task_description: str = task_description
         self.num_workers: int = num_workers
         self.max_epochs: int = max_epochs
-        self.agent_model: str = model
-        self.evaluator_model: str = evaluator_model
+        self.agent_model_id: str = model
+        self.evaluator_model_id: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
         self.policy_optimization_history: list = []
-        self.task_examples: list[TaskExample] = task_examples
-        self.evalaution_examples: list[TaskExample] = evaluation_examples
-        self.evaluation_functions: list = 
+        self.training_examples: list[TaskExample] = training_examples
+        self.evaluation_examples: list[TaskExample] = evaluation_examples
+        self.evaluation_functions: list = None
         self._modified_prompt: str | None = None
 
         # Setup the agents to be used in this policy workflow
@@ -123,7 +123,7 @@ class PromptOptimizer(BasePolicy):
             examples (_type_, optional): _description_. Defaults to None.
         """
 
-    def __correctness_checker(self):
+    def __run_scoring(self):
         pass
 
     def run(self):
