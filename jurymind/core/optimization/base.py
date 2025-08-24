@@ -2,7 +2,11 @@
 Classes and functions to run different opmtimization tasks.
 """
 
+import mlflow
+from mlflow.entities import SpanType
+
 import json
+
 
 from pydantic_ai import Agent
 from loguru import logger
@@ -46,12 +50,13 @@ class OptimizationPipeline(BasePipeline):
         self.steps: list = []  # need to define this
 
     def run(self):
+ 
         """Run each step in the pipeline and log results to mlflow"""
 
 
-class PromptOptimizationPolicy(BasePolicy):
+class PromptOptimizer(BasePolicy):
     """
-    Policy to optimize a prompt to a specific task.
+    Optimize a prompt to a specific task.
     """
 
     def __init__(
@@ -63,11 +68,12 @@ class PromptOptimizationPolicy(BasePolicy):
         max_epochs: int = 5,
         num_workers: int = 1,
         search_type: str = "greedy",
-        track_mlflow: bool = True,
+        track_mlflow: bool = False,
         task_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
     ):
-        """Initialize prompt optimization policy
+        """
+        Initialize prompt optimization 
 
         Args:
             prompt (str): Prompt to optimize in this policy.
@@ -76,7 +82,7 @@ class PromptOptimizationPolicy(BasePolicy):
             max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
-            track_mlflow (bool, optional): Use mlflow tracking. Defaults to True.
+            track_mlflow (bool, optional): Use mlflow tracking. Defaults to False.
             task_examples (list[TaskExample], optional): Optional list of TaskExample's to help generate new examples from. Defaults to None.
             evaluation_examples (list[TaskExample], optional): Optional list of TaskExample's to use as a test set for evaluate the prompts on. Defaults to None
         """
@@ -90,7 +96,8 @@ class PromptOptimizationPolicy(BasePolicy):
         self.policy_optimization_history: list = []
         self.task_examples: list[TaskExample] = task_examples
         self.evalaution_examples: list[TaskExample] = evaluation_examples
-        self._modified_prompt: str = self.original_prompt
+        self.evaluation_functions: list = 
+        self._modified_prompt: str | None = None
 
         # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
@@ -106,9 +113,20 @@ class PromptOptimizationPolicy(BasePolicy):
             self.agent_model, output_type=OptimizationStepResult, retries=3
         )
 
-    def run(
-        self,
-    ):
+    def _candidate_generation(self, prompt, task_description, suggestions=None, n=5):
+        """
+        Generates a list of candidates to test against
+
+        Args:
+            prompt (_type_): _description_
+            task_description (_type_): _description_
+            examples (_type_, optional): _description_. Defaults to None.
+        """
+
+    def __correctness_checker(self):
+        pass
+
+    def run(self):
         """Run the optimization steps for this policy."""
         logger.info("Beginning start of optimization policy execution.")
         # runs the workflow for this policy
@@ -159,7 +177,7 @@ class PromptOptimizationPolicy(BasePolicy):
             ).output
 
             logger.debug(
-                f"\n=====\n{optimization_step_result.modified_prompt}\n=====\n"
+                f"New version of Prompt\n=====\n{optimization_step_result.modified_prompt}\n=====\n"
             )
 
             current_prompt = optimization_step_result.modified_prompt

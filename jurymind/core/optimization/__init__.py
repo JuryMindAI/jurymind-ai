@@ -1,5 +1,5 @@
-from jurymind.core.optimization.base import PromptOptimizationPolicy
+from jurymind.core.optimization.base import PromptOptimizer
 
 __all__ = [
-    "PromptOptimizationPolicy",
+    "PromptOptimizer",
 ]
