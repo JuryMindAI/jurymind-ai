@@ -59,7 +59,7 @@ class PromptOptimizationPolicy(BasePolicy):
         prompt: str,
         task_description: str,
         model: str = "openai:gpt-4.1-mini",
-        evaluator_model: str = "openai:gpt-4.1-mini",
+        evaluator_model: str = "openai:gpt-4.1",  # Defaults to more advanced model for evaluations
         max_epochs: int = 5,
         num_workers: int = 1,
         search_type: str = "greedy",
@@ -133,7 +133,7 @@ class PromptOptimizationPolicy(BasePolicy):
                 batch_prediction_prompt
             ).output
 
-            logger.info("Batch prediction results complete. Begining eval.")
+            logger.info("Begining evaluation of batch predictions.")
             eval_prompt = build_evaluation_prompt(
                 current_prompt,
                 self.task_description,
@@ -144,21 +144,23 @@ class PromptOptimizationPolicy(BasePolicy):
 
             eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
 
-            logger.info(f"Evaluation Result: {eval_result}")
-
+            logger.debug(f"Evaluation Result: {eval_result}")
+            # Add the current prompt to the history before we modify
             self.policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
                 self.policy_optimization_history,
                 current_prompt,
-                OptimizationStepResult.model_json_schema(),
+                eval_result.suggested_changes,
             )
 
             optimization_step_result = self.__modification_agent.run_sync(
                 modfication_prompt
             ).output
 
-            logger.info(f"\n=====\n{optimization_step_result.modified_prompt}\n\n")
+            logger.debug(
+                f"\n=====\n{optimization_step_result.modified_prompt}\n=====\n"
+            )
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(

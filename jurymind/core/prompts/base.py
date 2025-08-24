@@ -3,8 +3,8 @@ from jurymind.core.models import OptimizationStepResult
 
 OPTIMZE_PROMPT_STEP = """You are an expert at optimizing prompts for a given task."""
 
-OPTIMIZER_INSTRUCTIONS = f"""Your job is to optimize a prompt from a user. You optimize 
-by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the required task.
+OPTIMIZER_INSTRUCTIONS = f"""Your job is to optimize a prompt for a specific task which is described below. You optimize by rewriting, editing 
+and or enhance the prompt to best work with an LLM and perform the required task.
 
 Below is the request to optimize format with field descriptions:
 
@@ -25,17 +25,17 @@ result:
 OPTIMIZER_TEMPLATE = """Your job is to optimize a prompt. You optimize 
 by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM and perform the task described below.
 
-Below is the request to optimize format with field descriptions:
+### Below is the request to optimize format with field descriptions: ###
 
 {task_desc}
 
-Request to optimize values:
+### Request to optimize values: ###
 
 {optimize_job}
 
-Output your results like so:
+### Suggestions for changes to the prompt ###
 
-{output_schema}
+{suggestions}
 
 """
 
@@ -77,15 +77,15 @@ CLASSIFICATION_INSTRUCTIONS = """
 You perform classification on a batch of examples as defined in the prompt below. 
 You must generate a list of predictions based on the prompts instructions
 
-### Prompt: 
+### Prompt: ### 
 
 {prompt}
 
-### Batch of examples to classify:
+### Batch of examples to classify: ###
    
 {batch}
 
-Result:
+ClassificationResult:
 """
 
 EVALUATE_INSTRUCTIONS = """
@@ -122,8 +122,8 @@ You must format your report in this schema:
 
 PROMPT_MODIFICATION = """
 
-Agent is a large language model whose task is to modify a prompt based on the evaluation 
-report from another agent. You must correct and modify the prompt based on the suggestions in the report.
+You are a large language model whose task is to modify a prompt based on the following evaluation report from a more advanced LLM. 
+You must correct and modify the prompt based on the modification suggestions provided. The new prompt must be unique from all previous prompts derived.
 
 ### Prompt History ###
 
@@ -151,11 +151,12 @@ you would do.
 
 # TODO: Probably put these elsewhere but for now keep here
 
+
 def build_optimizer_prompt(task_desc, optimize_job, output_schema):
     return OPTIMIZER_TEMPLATE.format(
         task_desc=json.dumps(task_desc, indent=2),
         optimize_job=json.dumps(optimize_job, indent=2),
-        output_schema=json.dumps(output_schema, indent=2),
+        suggestions=json.dumps(output_schema, indent=2),
     )
 
 
@@ -164,7 +165,7 @@ def build_generator_prompt(
     generator_job,
     output_schema,
     optional_example="No Optional Examples for now",
-    n=10
+    n=10,
 ):
     return OPTIMIZER_DATA_GENERATOR.format(
         n=n,
@@ -189,9 +190,7 @@ def build_evaluation_prompt(
 
 
 def build_classifier_prompt(prompt, batch):
-    return CLASSIFICATION_INSTRUCTIONS.format(
-        prompt=prompt, batch=batch
-    )
+    return CLASSIFICATION_INSTRUCTIONS.format(prompt=prompt, batch=batch)
 
 
 def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):

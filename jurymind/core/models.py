@@ -36,9 +36,7 @@ class OptimizationStepResult(BaseModel):
     optimized_prompt: str = Field(
         description="Field to store the optimized prompt the agent rewrote."
     )
-    original_prompt: str = Field(
-        description="Orginal prompt that was to be optimize."
-    )
+    original_prompt: str = Field(description="Orginal prompt that was to be optimize.")
     reason: str = Field(
         description="Detailed explanation for the changes and why the changes were needed."
     )
@@ -82,9 +80,7 @@ class OptimzationModelMap(BaseModel):
 
 class TaskExample(BaseModel):
     example: str = Field(description="Example to use for the Task.")
-    label: int = Field(
-        description="Label of the example for the given task."
-    )
+    label: int = Field(description="Label of the example for the given task.")
 
 
 class DataPoint(BaseModel):
@@ -114,25 +110,25 @@ class SampleAnalysis(BaseModel):
 
 class ClassificationResult(BaseModel):
     explanation: str = Field(
-        description="Your explanation for why the prediction was made how it was."
+        description="Explain why you predicted the given label to the example."
     )
     prediction: int = Field(
         description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
     )
-    confidence_score: int = Field(
-        description="Your confidence in your prediction from 1 to 5. 1 is not confident at all and 5 is fully confident in the prediction."
+    confidence_score: float = Field(
+        description="The confidence score between 0 and 1 on how correct you think your prediction is."
     )
 
 
 class OptimizationStepResult(BaseModel):
     explanation: str = Field(
-        description="You must give a reason for the changes you made and why it will work better."
+        description="You give the reasons for the changes you made along with how it will solve for issues with the original prompt."
     )
     modified_prompt: str = Field(
-        description="The modified prompt you came up with to improve the original promptt."
+        description="The modified version you came up with to improve the original promptt."
     )
     confidence: str = Field(
-        description="Your confidence level between 1 to 5 that the new prompt will perform better than the previous one."
+        description="Your confidence level between 0 and 1 that the new prompt will perform better than the previous one."
     )
 
 
