@@ -1,3 +1,7 @@
+"""
+Classes to handle creation of agents with multiple pre defined agents already available to use.
+"""
+
 from pydantic_ai import Agent
 from jurymind.core.models import OptimizationStepResult
 
