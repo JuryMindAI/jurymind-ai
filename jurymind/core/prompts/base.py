@@ -77,48 +77,40 @@ CLASSIFICATION_INSTRUCTIONS = """
 You perform classification on a batch of examples as defined in the prompt below. 
 You must generate a list of predictions based on the prompts instructions
 
-Prompt: 
+### Prompt: 
 
 {prompt}
 
-Batch of examples to classify:
+### Batch of examples to classify:
    
 {batch}
 
-You must output your predictions in the following format:
-
-{output_schema}
-
+Result:
 """
 
 EVALUATE_INSTRUCTIONS = """
-Your job is to perform is building a report on how well the given prompt was able to perform
-the task_description defined below. You must take the predictions and compare them to the ground truth. 
+Your job is to perform is generating a report on how well the given prompt was able to perform a task_description. 
+You must take the predictions and compare those with the known ground_truth labels. 
+You must then output suggested changes, the accuracy, and a confusion matrix. 
 
-Task Description:
-    
-{task_description}
-
-Prompt:
+### Prompt:
 
 {prompt}
 
-Predictions by the LLM:
+### Task Description:
+    
+{task_description}
+
+### Predictions:
 
 {predictions}
 
-Ground truth:
+### Ground truth labels:
 
 {ground_truth}
 
 ###
 Note that the ground-truth labels are __absolutely correct__, but the prompts (task description) may be incorrect and need modification.
-Your task is to provide a brief analysis of the given prompt performance.
-Guidelines:
-1. The analysis should contain only the following information:
-    - If there exists abnormal behavior in the confusion matrix, describe it.
-    - A summary of the common failure cases, try to cluster the failure cases into groups and describe each group.
-3. The total length of your analysis should be less than 200 token!
 ###
 
 You must format your report in this schema:
@@ -157,4 +149,52 @@ you would do.
 
 """
 
+# TODO: Probably put these elsewhere but for now keep here
 
+def build_optimizer_prompt(task_desc, optimize_job, output_schema):
+    return OPTIMIZER_TEMPLATE.format(
+        task_desc=json.dumps(task_desc, indent=2),
+        optimize_job=json.dumps(optimize_job, indent=2),
+        output_schema=json.dumps(output_schema, indent=2),
+    )
+
+
+def build_generator_prompt(
+    task_desc,
+    generator_job,
+    output_schema,
+    optional_example="No Optional Examples for now",
+    n=10
+):
+    return OPTIMIZER_DATA_GENERATOR.format(
+        n=n,
+        generator_job=json.dumps(task_desc, indent=2),
+        task_description=json.dumps(generator_job, indent=2),
+        optional_examples=optional_example,
+        output_schema=json.dumps(output_schema, indent=2),
+    )
+
+
+def build_evaluation_prompt(
+    prompt, task_description, batch_predictions, ground_truth, output_schema
+):
+    return EVALUATE_INSTRUCTIONS.format(
+        n=len(batch_predictions.predictions),
+        prompt=prompt,
+        task_description=task_description,
+        predictions=batch_predictions,
+        ground_truth=ground_truth,
+        output_schema=output_schema,
+    )
+
+
+def build_classifier_prompt(prompt, batch):
+    return CLASSIFICATION_INSTRUCTIONS.format(
+        prompt=prompt, batch=batch
+    )
+
+
+def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
+    return PROMPT_MODIFICATION.format(
+        prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
+    )
