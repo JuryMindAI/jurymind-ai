@@ -87,6 +87,7 @@ class PromptOptimizer(BasePolicy):
             evaluation_examples (list[TaskExample], optional): Optional list of TaskExample's to use as a test set for evaluate the prompts on. Defaults to None
         """
         self.original_prompt: str = prompt
+        self._modified_prompt: str | None = None
         self.task_description: str = task_description
         self.num_workers: int = num_workers
         self.max_epochs: int = max_epochs
@@ -97,20 +98,19 @@ class PromptOptimizer(BasePolicy):
         self.training_examples: list[TaskExample] = training_examples
         self.evaluation_examples: list[TaskExample] = evaluation_examples
         self.evaluation_functions: list = None
-        self._modified_prompt: str | None = None
 
         # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
-            self.agent_model, output_type=BatchClassificationResult, retries=3
+            self.agent_model_id, output_type=BatchClassificationResult, retries=3
         )
         self.__evaluation_agent = Agent(
-            self.evaluator_model, output_type=ClassificationReport, retries=3
+            self.evaluator_model_id, output_type=ClassificationReport, retries=3
         )
 
         # self.__generation_agent = Agent(self.agent_model, output_type=)
 
         self.__modification_agent = Agent(
-            self.agent_model, output_type=OptimizationStepResult, retries=3
+            self.agent_model_id, output_type=OptimizationStepResult, retries=3
         )
 
     def _candidate_generation(self, prompt, task_description, suggestions=None, n=5):
@@ -123,8 +123,11 @@ class PromptOptimizer(BasePolicy):
             examples (_type_, optional): _description_. Defaults to None.
         """
 
-    def __run_scoring(self):
-        pass
+    def __run_evaluations(self):
+        """
+        Runs the evaluation functions, if provided, over the evaluation examples to
+        align the prompt changes to the target function.
+        """
 
     def run(self):
         """Run the optimization steps for this policy."""
