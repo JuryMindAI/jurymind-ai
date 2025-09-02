@@ -7,6 +7,7 @@ from mlflow.entities import SpanType
 
 import json
 
+from typing import Callable
 
 from pydantic_ai import Agent
 from loguru import logger
@@ -67,10 +68,10 @@ class PromptOptimizer(BasePolicy):
         max_epochs: int = 5,
         num_workers: int = 1,
         search_type: str = "greedy",
-        track_mlflow: bool = False,
+        tracking_mlflow: bool = False,
         training_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
-        scoring_metrics: list = None,
+        evaluation_functions: list[Callable] = None,
     ):
         """
         Initialize prompt optimization
@@ -94,7 +95,7 @@ class PromptOptimizer(BasePolicy):
         self.agent_model_id: str = model
         self.evaluator_model_id: str = evaluator_model
         self.search_type: str = search_type  # greedy, beam
-        self.policy_optimization_history: list = []
+        self._policy_optimization_history: list = []
         self.training_examples: list[TaskExample] = training_examples
         self.evaluation_examples: list[TaskExample] = evaluation_examples
         self.evaluation_functions: list = None
@@ -112,6 +113,8 @@ class PromptOptimizer(BasePolicy):
         self.__modification_agent = Agent(
             self.agent_model_id, output_type=OptimizationStepResult, retries=3
         )
+        
+        self.__tracking_mlflow = tracking_mlflow
 
     def _candidate_generation(self, prompt, task_description, suggestions=None, n=5):
         """
@@ -128,6 +131,8 @@ class PromptOptimizer(BasePolicy):
         Runs the evaluation functions, if provided, over the evaluation examples to
         align the prompt changes to the target function.
         """
+        for func in self.evaluation_functions:
+            
 
     def run(self):
         """Run the optimization steps for this policy."""
@@ -185,14 +190,14 @@ class PromptOptimizer(BasePolicy):
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(
-                f"Epoch {epoch}: Finished round of optimization. \n Evaluation accuracy: {eval_result.accuracy}"
+                f"Epoch {epoch}: Finished round of optimization. \n Self evaluation accuracy: {eval_result.accuracy}"
             )
             epoch += 1
 
         self._modified_prompt = current_prompt
 
     def get_step_history(self):
-        return self.policy_optimization_history
+        return self._policy_optimization_history
 
     def get_optimized_prompt(self):
         return self._modified_prompt
