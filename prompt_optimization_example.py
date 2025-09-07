@@ -1,10 +1,31 @@
 import mlflow
 import json
 from dotenv import load_dotenv
-import mlflow.pydantic_ai
-import mlflow.pydantic_ai
+
 from jurymind.core.optimization import PromptOptimizer
 from jurymind.core.models import TaskExample
+from jurymind.evaluation.base import evaluator
+from sklearn.metrics import accuracy_score
+
+
+@evaluator
+def scorer(expected_result, output_result):
+    """
+    scorer _summary_
+
+    Args:
+        expected_result (_type_): _description_
+        output_result (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    print("HAHAHH")
+
+
+def accuracy_evaluator(output: list[int], expectations: list[int]):
+    """Takes outputs and expectations and returns accuracy measurement"""
+    return accuracy_score(expectations, output)
 
 
 if __name__ == "__main__":
@@ -12,9 +33,6 @@ if __name__ == "__main__":
 
     with open("small_data.json", "r") as f:
         dataset = json.load(f)
-
-    def scorer(expected_result, output_result):
-        return True
 
     task_examples = []  # todo build factory method for this
     for elm in dataset:
@@ -26,6 +44,7 @@ if __name__ == "__main__":
         "Classify the following data to see if they contain spoilers or not. Label should be 0 or 1.",
         "The task is a binary classification task to check if a review has spoilers in them or not.",
         evaluation_examples=task_examples,
+        evaluators=[accuracy_evaluator],
     )
 
     policy.run()
@@ -33,3 +52,4 @@ if __name__ == "__main__":
     print(policy.get_step_history())
     print()
     print(policy.get_optimized_prompt())
+    scorer("", "")

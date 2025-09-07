@@ -71,7 +71,7 @@ class PromptOptimizer(BasePolicy):
         tracking_mlflow: bool = False,
         training_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
-        evaluation_functions: list[Callable] = None,
+        evaluators: list[Callable] = None,
     ):
         """
         Initialize prompt optimization
@@ -98,7 +98,7 @@ class PromptOptimizer(BasePolicy):
         self._policy_optimization_history: list = []
         self.training_examples: list[TaskExample] = training_examples
         self.evaluation_examples: list[TaskExample] = evaluation_examples
-        self.evaluation_functions: list = None
+        self.evaluation_functions: list[Callable] = evaluators
 
         # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
@@ -113,7 +113,7 @@ class PromptOptimizer(BasePolicy):
         self.__modification_agent = Agent(
             self.agent_model_id, output_type=OptimizationStepResult, retries=3
         )
-        
+
         self.__tracking_mlflow = tracking_mlflow
 
     def _candidate_generation(self, prompt, task_description, suggestions=None, n=5):
@@ -126,13 +126,13 @@ class PromptOptimizer(BasePolicy):
             examples (_type_, optional): _description_. Defaults to None.
         """
 
-    def __run_evaluations(self):
+    def __run_evaluations(self, data):
         """
         Runs the evaluation functions, if provided, over the evaluation examples to
         align the prompt changes to the target function.
         """
         for func in self.evaluation_functions:
-            
+            func()
 
     def run(self):
         """Run the optimization steps for this policy."""
@@ -172,10 +172,10 @@ class PromptOptimizer(BasePolicy):
 
             logger.debug(f"Evaluation Result: {eval_result}")
             # Add the current prompt to the history before we modify
-            self.policy_optimization_history.append(current_prompt)
+            self._policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
-                self.policy_optimization_history,
+                self._policy_optimization_history,
                 current_prompt,
                 eval_result.suggested_changes,
             )
