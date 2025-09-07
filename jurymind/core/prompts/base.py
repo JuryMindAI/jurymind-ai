@@ -91,7 +91,8 @@ ClassificationResult:
 EVALUATE_INSTRUCTIONS = """
 Your job is to perform is generating a report on how well the given prompt was able to perform a task_description. 
 You must take the predictions and compare those with the known ground_truth labels. 
-You must then output suggested changes, the accuracy, and a confusion matrix. 
+You must then output suggested changes to be made to the prompt that will help improve the metrics. You must also give an explanation as to why these changes
+will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for overfitting, mention that in your explanation.
 
 ### Prompt:
 
@@ -100,6 +101,10 @@ You must then output suggested changes, the accuracy, and a confusion matrix.
 ### Task Description:
     
 {task_description}
+
+### Evaluation Metric Results:
+
+{metric_results}
 
 ### Predictions:
 
@@ -119,6 +124,10 @@ You must format your report in this schema:
 
 """
 
+META_EVAL_RESULTS = """
+Your task is to look at a series of examples and metrics that were calculated with the current prompt and output suggestions to apply
+to a modified version of the prompt that will improve the metrics on this task.
+"""
 
 PROMPT_MODIFICATION = """
 
@@ -145,7 +154,7 @@ You must correct and modify the prompt based on the modification suggestions pro
 4. The new prompt must be modified to prevent the failure cases.
 
 You must follow the evaluation instructions exactly! Do not deviate from the suggestions, even if they seem opposite to what
-you would do.
+you would do. Your task is just to implement the suggestions not cme up with your own solution.
 
 """
 

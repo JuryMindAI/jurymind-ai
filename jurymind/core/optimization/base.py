@@ -126,13 +126,15 @@ class PromptOptimizer(BasePolicy):
             examples (_type_, optional): _description_. Defaults to None.
         """
 
-    def __run_evaluations(self, data):
+    def __run_evaluations(self):
         """
         Runs the evaluation functions, if provided, over the evaluation examples to
         align the prompt changes to the target function.
         """
+        results = []
         for func in self.evaluation_functions:
             func()
+        return results
 
     def run(self):
         """Run the optimization steps for this policy."""
@@ -142,8 +144,8 @@ class PromptOptimizer(BasePolicy):
         # each step holds the current prompt
         current_prompt = self.original_prompt
 
-        examples = [x.example for x in self.evalaution_examples]
-        ground_truth = [x.label for x in self.evalaution_examples]
+        examples = [x.example for x in self.evaluation_examples]
+        ground_truth = [x.label for x in self.evaluation_examples]
 
         while epoch <= self.max_epochs:
             logger.info(f"Beginning epoch {epoch}/{self.max_epochs}")
@@ -168,7 +170,14 @@ class PromptOptimizer(BasePolicy):
                 ClassificationReport.model_json_schema(),
             )
 
-            eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+            # eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+            # run evaluators over the evaluation dataset if its provided
+            eval_results = None
+            if self.evaluation_functions:
+                eval_results = self.__run_evaluations()
+            else:
+                # attempt to use LLM to evaluate the ouput results
+                eval_results = self.__evaluation_agent.run_sync(eval_prompt).output
 
             logger.debug(f"Evaluation Result: {eval_result}")
             # Add the current prompt to the history before we modify
