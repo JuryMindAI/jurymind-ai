@@ -74,7 +74,7 @@ result:
 """
 
 CLASSIFICATION_INSTRUCTIONS = """
-You perform classification on a batch of examples as defined in the prompt below. 
+You perform classification on a batch of examples as defined in the prompt. 
 You must generate a list of predictions based on the prompts instructions
 
 ### Prompt: ### 
@@ -90,7 +90,7 @@ ClassificationResult:
 
 EVALUATE_INSTRUCTIONS = """
 Your job is to perform is generating a report on how well the given prompt was able to perform a task_description. 
-You must take the predictions and compare those with the known ground_truth labels. 
+You must take the predictions and compare those with the known ground truth labels. 
 You must then output suggested changes to be made to the prompt that will help improve the metrics. You must also give an explanation as to why these changes
 will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for overfitting, mention that in your explanation.
 
@@ -102,13 +102,13 @@ will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for
     
 {task_description}
 
-### Evaluation Metric Results:
-
-{metric_results}
-
 ### Predictions:
 
 {predictions}
+
+### Evaluation Metric Results:
+
+{metric_results}
 
 ### Ground truth labels:
 
@@ -186,13 +186,19 @@ def build_generator_prompt(
 
 
 def build_evaluation_prompt(
-    prompt, task_description, batch_predictions, ground_truth, output_schema
+    prompt,
+    task_description,
+    metric_results,
+    batch_predictions,
+    ground_truth,
+    output_schema,
 ):
     return EVALUATE_INSTRUCTIONS.format(
         n=len(batch_predictions.predictions),
         prompt=prompt,
         task_description=task_description,
         predictions=batch_predictions,
+        metric_results=metric_results,
         ground_truth=ground_truth,
         output_schema=output_schema,
     )

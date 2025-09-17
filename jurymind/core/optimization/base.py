@@ -114,7 +114,7 @@ class PromptOptimizer(BasePolicy):
             self.agent_model_id, output_type=OptimizationStepResult, retries=3
         )
 
-        self.__tracking_mlflow = tracking_mlflow
+        # self.__tracking_mlflow = tracking_mlflow
 
     def _candidate_generation(self, prompt, task_description, suggestions=None, n=5):
         """
@@ -125,15 +125,18 @@ class PromptOptimizer(BasePolicy):
             task_description (_type_): _description_
             examples (_type_, optional): _description_. Defaults to None.
         """
+        raise NotImplementedError()
 
-    def __run_evaluations(self):
+    def __run_evaluations(
+        self, model_predictions: list[str], data_expectations: list[str]
+    ):
         """
         Runs the evaluation functions, if provided, over the evaluation examples to
         align the prompt changes to the target function.
         """
         results = []
         for func in self.evaluation_functions:
-            func()
+            results.append(func(model_predictions, data_expectations))
         return results
 
     def run(self):
@@ -162,31 +165,35 @@ class PromptOptimizer(BasePolicy):
             ).output
 
             logger.info("Begining evaluation of batch predictions.")
-            eval_prompt = build_evaluation_prompt(
+
+            # eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+            # run evaluators over the evaluation dataset if its provided
+            # eval_results = None
+            # if self.evaluation_functions:
+            evaluation_metric_results = self.__run_evaluations(
+                batch_prediction_result.predictions, ground_truth
+            )
+
+            eval_report_prompt = build_evaluation_prompt(
                 current_prompt,
                 self.task_description,
+                evaluation_metric_results,
                 batch_prediction_result,
                 ground_truth,
                 ClassificationReport.model_json_schema(),
             )
+            # else:
+            #     # attempt to use LLM to evaluate the ouput results
+            eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
 
-            # eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
-            # run evaluators over the evaluation dataset if its provided
-            eval_results = None
-            if self.evaluation_functions:
-                eval_results = self.__run_evaluations()
-            else:
-                # attempt to use LLM to evaluate the ouput results
-                eval_results = self.__evaluation_agent.run_sync(eval_prompt).output
-
-            logger.debug(f"Evaluation Result: {eval_result}")
+            logger.info(f"Evaluation Result: {eval_report}")
             # Add the current prompt to the history before we modify
             self._policy_optimization_history.append(current_prompt)
 
             modfication_prompt = build_optimizer_prompt(
                 self._policy_optimization_history,
                 current_prompt,
-                eval_result.suggested_changes,
+                eval_report.suggested_changes,
             )
 
             optimization_step_result = self.__modification_agent.run_sync(
@@ -199,7 +206,7 @@ class PromptOptimizer(BasePolicy):
 
             current_prompt = optimization_step_result.modified_prompt
             logger.info(
-                f"Epoch {epoch}: Finished round of optimization. \n Self evaluation accuracy: {eval_result.accuracy}"
+                f"Epoch {epoch}: Finished round of optimization. \n Metrics: {evaluation_metric_results}"
             )
             epoch += 1
 

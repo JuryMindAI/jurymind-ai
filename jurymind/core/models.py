@@ -80,7 +80,7 @@ class OptimzationModelMap(BaseModel):
 
 class TaskExample(BaseModel):
     example: str = Field(description="Example to use for the Task.")
-    label: int = Field(description="Label of the example for the given task.")
+    label: str = Field(description="Label of the example for the given task.")
 
 
 class DataPoint(BaseModel):
@@ -112,15 +112,13 @@ class ClassificationResult(BaseModel):
     explanation: str = Field(
         description="Explain why you predicted the given label to the example."
     )
-    prediction: int = Field(
-        description="You come up with a binary prediction of 0 or and 1 for this sample. This is not where you put the ground truth."
-    )
-    confidence_score: float = Field(
-        description="The confidence score between 0 and 1 on how correct you think your prediction is."
+    prediction: str = Field(
+        description="You come up with a classification prediction based on the prompt instructions. This is not where you put the ground truth or other explanation."
     )
 
 
 class OptimizationStepResult(BaseModel):
+
     explanation: str = Field(
         description="You give the reasons for the changes you made along with how it will solve for issues with the original prompt."
     )
@@ -142,10 +140,14 @@ class ClassificationReport(BaseModel):
         description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list."
     )
 
-    accuracy: float = Field(
-        description="The accuracy percentage of the classification results."
+    explanation_for_change: str = Field(
+        description="You must give your reasoning as to why these changes need to be made to increase metric performance for the task."
     )
 
-    confusion_matrix: dict = Field(
-        description="Confusion matrix of the predictions to the ground truth."
-    )
+    # accuracy: float = Field(
+    #     description="The accuracy percentage of the classification results."
+    # )
+
+    # confusion_matrix: dict = Field(
+    #     description="Confusion matrix of the predictions to the ground truth."
+    # )
