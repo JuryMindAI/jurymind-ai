@@ -3,6 +3,7 @@ Classes and functions to run different opmtimization tasks.
 """
 
 import mlflow
+import random
 from mlflow.entities import SpanType
 
 import json
@@ -67,7 +68,7 @@ class PromptOptimizer(BasePolicy):
         evaluator_model: str = "openai:gpt-4.1",  # Defaults to more advanced model for evaluations
         max_epochs: int = 5,
         num_workers: int = 1,
-        search_type: str = "greedy",
+        search_type: str = "beam",
         tracking_mlflow: bool = False,
         training_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
@@ -127,6 +128,16 @@ class PromptOptimizer(BasePolicy):
         """
         raise NotImplementedError()
 
+    def _select(self, prompts):
+        """
+        helper function to select the best candidates
+
+        Args:
+            prompts (_type_): _description_
+        """
+
+        raise NotImplementedError()
+
     def __run_evaluations(
         self, model_predictions: list[str], data_expectations: list[str]
     ):
@@ -139,60 +150,53 @@ class PromptOptimizer(BasePolicy):
             results.append(func(model_predictions, data_expectations))
         return results
 
-    def run(self):
-        """Run the optimization steps for this policy."""
-        logger.info("Beginning start of optimization policy execution.")
-        # runs the workflow for this policy
-        epoch = 1
-        # each step holds the current prompt
-        current_prompt = self.original_prompt
+    def __search_space(
+        self, space: list, examples: list, ground_truth=None, n=5
+    ) -> list:
+        """
+        Perform beam search
 
-        examples = [x.example for x in self.evaluation_examples]
-        ground_truth = [x.label for x in self.evaluation_examples]
+        Args:
+            space (_type_): _description_
 
-        while epoch <= self.max_epochs:
-            logger.info(f"Beginning epoch {epoch}/{self.max_epochs}")
+        Raises:
+            NotImplementedError: _description_
+        """
+        candidates = []
+        for prompt in space:
+            # Could maybe multi thread this since each prompt would be
+
+            minibatch_sample = random.sample(examples, n)
             batch_prediction_prompt = build_classifier_prompt(
-                prompt=current_prompt,
+                prompt=prompt,
                 batch=json.dumps(
-                    examples
+                    minibatch_sample
                 ),  # dont give the model both the example and the labels, the llm may try to cheat.
             )
 
-            logger.info("Beginning batch prediction step.")
             batch_prediction_result = self.__classification_agent.run_sync(
                 batch_prediction_prompt
             ).output
 
-            logger.info("Begining evaluation of batch predictions.")
-
-            # eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
-            # run evaluators over the evaluation dataset if its provided
-            # eval_results = None
-            # if self.evaluation_functions:
+            # list of evaluation results we need to merge with all the candidates
             evaluation_metric_results = self.__run_evaluations(
                 batch_prediction_result.predictions, ground_truth
             )
 
             eval_report_prompt = build_evaluation_prompt(
-                current_prompt,
+                prompt,
                 self.task_description,
                 evaluation_metric_results,
                 batch_prediction_result,
                 ground_truth,
                 ClassificationReport.model_json_schema(),
             )
-            # else:
             #     # attempt to use LLM to evaluate the ouput results
             eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
 
-            logger.info(f"Evaluation Result: {eval_report}")
-            # Add the current prompt to the history before we modify
-            self._policy_optimization_history.append(current_prompt)
-
             modfication_prompt = build_optimizer_prompt(
                 self._policy_optimization_history,
-                current_prompt,
+                prompt,
                 eval_report.suggested_changes,
             )
 
@@ -200,17 +204,86 @@ class PromptOptimizer(BasePolicy):
                 modfication_prompt
             ).output
 
-            logger.debug(
-                f"New version of Prompt\n=====\n{optimization_step_result.modified_prompt}\n=====\n"
+            # TODO: change this to maybe not return all the eval metric results for the given prompt but a mean?
+            candidates.append(
+                (optimization_step_result.modified_prompt, evaluation_metric_results)
             )
 
-            current_prompt = optimization_step_result.modified_prompt
-            logger.info(
-                f"Epoch {epoch}: Finished round of optimization. \n Metrics: {evaluation_metric_results}"
-            )
-            epoch += 1
+        return candidates
 
-        self._modified_prompt = current_prompt
+    def run(self):
+        """Run the optimization steps for this policy."""
+        logger.info("Beginning start of optimization policy execution.")
+        # runs the workflow for this policy
+        epoch = 1
+        # each step holds the current prompt
+        # current_prompt = self.original_prompt
+
+        __batch_prompt = [self.original_prompt]
+
+        examples = [x.example for x in self.evaluation_examples]
+        ground_truth = [x.label for x in self.evaluation_examples]
+
+        # Loop for n epochs, collecting up the results per pass
+        while epoch <= self.max_epochs:
+            # what do I do about the eval_results...
+            candidates, eval_results = self.__search_space(
+                __batch_prompt, examples, ground_truth
+            )
+            __batch_prompt.extend(candidates)
+        #     logger.info("Beginning batch prediction step.")
+        #     batch_prediction_result = self.__classification_agent.run_sync(
+        #         batch_prediction_prompt
+        #     ).output
+
+        #     logger.info("Begining evaluation of batch predictions.")
+
+        #     # eval_result = self.__evaluation_agent.run_sync(eval_prompt).output
+        #     # run evaluators over the evaluation dataset if its provided
+        #     # eval_results = None
+        #     # if self.evaluation_functions:
+        #     evaluation_metric_results = self.__run_evaluations(
+        #         batch_prediction_result.predictions, ground_truth
+        #     )
+
+        #     eval_report_prompt = build_evaluation_prompt(
+        #         current_prompt,
+        #         self.task_description,
+        #         evaluation_metric_results,
+        #         batch_prediction_result,
+        #         ground_truth,
+        #         ClassificationReport.model_json_schema(),
+        #     )
+        #     # else:
+        #     #     # attempt to use LLM to evaluate the ouput results
+        #     eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
+
+        #     logger.info(f"Evaluation Result: {eval_report}")
+        #     # Add the current prompt to the history before we modify
+        #     self._policy_optimization_history.append(current_prompt)
+        #     logger.info("Beginning prompt modification")
+        #     modfication_prompt = build_optimizer_prompt(
+        #         self._policy_optimization_history,
+        #         current_prompt,
+        #         eval_report.suggested_changes,
+        #     )
+
+        #     optimization_step_result = self.__modification_agent.run_sync(
+        #         modfication_prompt
+        #     ).output
+
+        #     logger.debug(
+        #         f"New version of Prompt\n=====\n{optimization_step_result.modified_prompt}\n=====\n"
+        #     )
+
+        #     current_prompt = optimization_step_result.modified_prompt
+        #     logger.info(
+        #         f"Epoch {epoch}: Finished round of optimization. \n Metrics: {evaluation_metric_results}"
+        #     )
+        #     epoch += 1
+
+        # self._modified_prompt = current_prompt
+        return max(__batch_prompt)
 
     def get_step_history(self):
         return self._policy_optimization_history
