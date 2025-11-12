@@ -109,9 +109,7 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    explanation: str = Field(
-        description="Explain why you predicted the given label to the example."
-    )
+    explanation: str = Field(description="Explain why you predicted the given label.")
     prediction: str = Field(
         description="You come up with a classification prediction based on the prompt instructions. This is not where you put the ground truth or other explanation."
     )
@@ -120,13 +118,13 @@ class ClassificationResult(BaseModel):
 class OptimizationStepResult(BaseModel):
 
     explanation: str = Field(
-        description="You give the reasons for the changes you made along with how it will solve for issues with the original prompt."
+        description="You explains the reasons for the changes you made along with how it will solve for issues with the original prompt."
     )
     modified_prompt: str = Field(
-        description="The modified version you came up with to improve the original promptt."
+        description="The modified version you came up with to improve the original prompt."
     )
     confidence: str = Field(
-        description="Your confidence level between 0 and 1 that the new prompt will perform better than the previous one."
+        description="Your confidence level between 1 and 5 on a Likert scale that the new prompt will perform better than the previous prompt."
     )
 
 
@@ -134,14 +132,14 @@ class BatchClassificationResult(BaseModel):
     predictions: list[ClassificationResult]
 
 
-class ClassificationReport(BaseModel):
+class ModificationReport(BaseModel):
 
     suggested_changes: str = Field(
-        description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list."
+        description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list that another LLM can follow."
     )
 
-    explanation_for_change: str = Field(
-        description="You must give your reasoning as to why these changes need to be made to increase metric performance for the task."
+    explanation: str = Field(
+        description="You must give your reasoning as to why these changes need to be made to increase the performance on the task."
     )
 
     # accuracy: float = Field(
@@ -151,3 +149,7 @@ class ClassificationReport(BaseModel):
     # confusion_matrix: dict = Field(
     #     description="Confusion matrix of the predictions to the ground truth."
     # )
+
+
+class GeneratedVariants:
+    variants: list[str] = Field(description="Put the list of new variant prompts here.")

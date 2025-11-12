@@ -115,12 +115,8 @@ will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for
 {ground_truth}
 
 ###
-Note that the ground-truth labels are __absolutely correct__, but the prompts (task description) may be incorrect and need modification.
+Note that the ground-truth labels are __absolutely correct__, but the prompts may be incorrect and need modification.
 ###
-
-You must format your report in this schema:
-
-{output_schema}
 
 """
 
@@ -186,12 +182,7 @@ def build_generator_prompt(
 
 
 def build_evaluation_prompt(
-    prompt,
-    task_description,
-    metric_results,
-    batch_predictions,
-    ground_truth,
-    output_schema,
+    prompt, task_description, metric_results, batch_predictions, ground_truth
 ):
     return EVALUATE_INSTRUCTIONS.format(
         n=len(batch_predictions.predictions),
@@ -200,7 +191,6 @@ def build_evaluation_prompt(
         predictions=batch_predictions,
         metric_results=metric_results,
         ground_truth=ground_truth,
-        output_schema=output_schema,
     )
 
 
