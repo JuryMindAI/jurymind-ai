@@ -160,7 +160,7 @@ class PromptOptimizer(BasePolicy):
         return results
 
     def __search_space(
-        self, space: list, examples: list, expectations=None, n=5
+        self, space: list, examples: list, expectations=None, sample_size=10, k=5
     ) -> list:
         """
         Perform a search over the space of prompts to optimize for the given task
@@ -169,8 +169,9 @@ class PromptOptimizer(BasePolicy):
             space (_type_): Search space of prompts to run against example data
 
         """
-
-        candidates = []
+        # run each candidate in the space through the evaluator functions
+        # once all candidates have run through eval functions, generate new modified variations off the top k scoring p_i-1 candidates
+        beam_results = []
         for prompt in space:
 
             # TODO: Should multi thread this since each prompt would be its own set of work
@@ -209,14 +210,8 @@ class PromptOptimizer(BasePolicy):
                 eval_report.suggested_changes,
             )
 
-            optimization_step_result = self.__modification_agent.run_sync(
-                modfication_prompt
-            ).output
-
             # TODO: change this to maybe not return all the eval metric results for the given prompt but a mean?
-            candidates.append(
-                (optimization_step_result.modified_prompt, evaluation_metric_results)
-            )
+            beam_results.append((prompt, evaluation_metric_results))
 
         return candidates
 
@@ -225,24 +220,32 @@ class PromptOptimizer(BasePolicy):
         # runs the workflow for this policy
         epoch = 1
         # each step holds the current prompt
-        # current_prompt = self.original_prompt
-        __prompt_variants = self.__generation_agent.run_sync().output
-        __candidates_to_consider = __prompt_variants.variants + [self.original_prompt]
         # Generate k variants up front to get and initial search space beyond a singular prompt
+        __p0_variants = self.__generation_agent.run_sync(self.original_prompt).output
+        # __all_candi = __p0_variants.variants + [self.original_prompt]
+
+        beam_candidates = __p0_variants.variants + [self.original_prompt]
+        all_beam_results = []
+
         examples = [x.example for x in self.evaluation_examples]
         expectations = [x.label for x in self.evaluation_examples]
+
         pbar = tqdm.tqdm(desc="Prompt Optimizing", total=self.max_epochs + 1)
         # Loop for n epochs, collecting up the results per pass
         while epoch <= self.max_epochs:
             # what do I do about the eval_results...
-            candidates = self.__search_space(
-                __candidates_to_consider, examples, expectations
-            )
-            __candidates_to_consider.extend(candidates)
-            # get the top n candidates and keep for next round of interation
+
+            candidates = self.__search_space(beam_candidates, examples, expectations)
+            # get top k from beam candidates (list of candidate with eval score)
+            top_k = []
+            # add the top k results to all the beam search results
+            all_beam_results.extend(top_k)
+
+            # now generate next round of candidates based off of the top k we just got
+            beam_candidates = self.__modification_agent.run_sync().output
             pbar.update(1)
 
-        return max(__candidates_to_consider)
+        return max(beam_candidates)
 
     def get_step_history(self):
         return self._policy_optimization_history
