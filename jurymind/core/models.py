@@ -151,5 +151,5 @@ class ModificationReport(BaseModel):
     # )
 
 
-class GeneratedVariants:
+class PromptVariants:
     variants: list[str] = Field(description="Put the list of new variant prompts here.")

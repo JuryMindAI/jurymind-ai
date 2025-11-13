@@ -25,6 +25,7 @@ from jurymind.core.models import (
     ModificationReport,
     OptimizationStepResult,
     TaskExample,
+    PromptVariants,
 )
 
 
@@ -112,7 +113,9 @@ class PromptOptimizer(BasePolicy):
             self.evaluator_model_id, output_type=ModificationReport, retries=3
         )
 
-        # self.__generation_agent = Agent(self.agent_model, output_type=)
+        self.__generation_agent = Agent(
+            self.agent_model_id, output_type=PromptVariants, retries=3
+        )
 
         self.__modification_agent = Agent(
             self.agent_model_id, output_type=OptimizationStepResult, retries=3
@@ -131,7 +134,7 @@ class PromptOptimizer(BasePolicy):
             task_description (_type_): description of the task the prompt is trying to solve for
             suggestions: if suggestions are available from previous eval runs, provide them to the llm. Defaults to None.
         """
-
+        self.__modification_agent
         raise NotImplementedError()
 
     def _select(self, prompts):
@@ -223,8 +226,8 @@ class PromptOptimizer(BasePolicy):
         epoch = 1
         # each step holds the current prompt
         # current_prompt = self.original_prompt
-        __prompt_variants = []
-        __candidates_to_consider = __prompt_variants + [self.original_prompt]
+        __prompt_variants = self.__generation_agent.run_sync().output
+        __candidates_to_consider = __prompt_variants.variants + [self.original_prompt]
         # Generate k variants up front to get and initial search space beyond a singular prompt
         examples = [x.example for x in self.evaluation_examples]
         expectations = [x.label for x in self.evaluation_examples]
