@@ -39,6 +39,10 @@ by seeing how to rewrite, fix, or enhance the prompt to best work with an LLM an
 
 """
 
+PROMPT_VARIANT_GENERATOR_INST = """
+You are an expert AI Agent which generates variants of a given prompt
+"""
+
 OPTIMIZER_DATA_GENERATOR = """ 
 You are an expert AI agent which generates very challenging and unique examples based on a task description. 
 Your must generate {n} extremely challenging, realistic, and very unique examples.
@@ -66,16 +70,13 @@ Optional examples to base generation off of:
 
 You MUST not attempt to explain or classify the given task in your output. Only generate novel challenging examples based on the rules above and task description given.
 
-You must output in the following structured format:
-
-{output_schema}
-
-result:
+PromptVariants:
 """
 
 CLASSIFICATION_INSTRUCTIONS = """
 You perform classification on a batch of examples as defined in the prompt. 
-You must generate a list of predictions based on the prompts instructions
+You must generate a list of predictions based on the prompts instructions. Return the predictions in the same order of the batch.
+
 
 ### Prompt: ### 
 
@@ -89,7 +90,7 @@ ClassificationResult:
 """
 
 EVALUATE_INSTRUCTIONS = """
-Your job is to perform is generating a report on how well the given prompt was able to perform a task_description. 
+Your job is generating a report on how well the given prompt was able to perform a task_description. 
 You must take the predictions and compare those with the known ground truth labels. 
 You must then output suggested changes to be made to the prompt that will help improve the metrics. You must also give an explanation as to why these changes
 will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for overfitting, mention that in your explanation.
@@ -127,8 +128,9 @@ to a modified version of the prompt that will improve the metrics on this task.
 
 PROMPT_MODIFICATION = """
 
-You are a large language model whose task is to modify a prompt based on the following evaluation report from a more advanced LLM. 
-You must correct and modify the prompt based on the modification suggestions provided. The new prompt must be unique from all previous prompts derived.
+You are an AI agent whose task is to modify a prompt based on the following suggestions, if provided, from a more advanced AI You should generate {n} variants of the current prompt. 
+You must correct and modify the prompt based on the modification suggestions, if they are provided. The new prompt must be unique from all previous prompts in both the prompt history and what you come up with.
+Think carefully about how you can modify the current prompt given the information available to you. 
 
 ### Prompt History ###
 
@@ -144,20 +146,28 @@ You must correct and modify the prompt based on the modification suggestions pro
 
 ###Instructions###
 
-1. You will generate a new prompt based on the error analysis. 
+1. You will generate a new prompt based on the modficiation suggestions. If no suggestions are supplied, then just go to steps 3 and 4.
 2. Follow the analysis suggestions exactly and a predicted score for this prompt.
 3. The new prompt must be different from all of the previous prompts.
 4. The new prompt must be modified to prevent the failure cases.
 
 You must follow the evaluation instructions exactly! Do not deviate from the suggestions, even if they seem opposite to what
-you would do. Your task is just to implement the suggestions not cme up with your own solution.
+you would do. Your task is just to implement the suggestions not come up with your own solution at this step.
+
+PromptVariants:
 
 """
 
 # TODO: Probably put these elsewhere but for now keep here
 
 
-def build_optimizer_prompt(task_desc, optimize_job, output_schema):
+def build_optimizer_prompt(
+    task_desc,
+    optimize_job,
+    output_schema={
+        "suggestions": "No suggestions at this time. Just create a variant."
+    },
+):
     return OPTIMIZER_TEMPLATE.format(
         task_desc=json.dumps(task_desc, indent=2),
         optimize_job=json.dumps(optimize_job, indent=2),
@@ -198,7 +208,10 @@ def build_classifier_prompt(prompt, batch):
     return CLASSIFICATION_INSTRUCTIONS.format(prompt=prompt, batch=batch)
 
 
-def __build_optimizer_prompt(prompt_hist, curr_prompt, suggestions):
+def build_modification_prompt(prompt_hist, curr_prompt, suggestions, n=3):
     return PROMPT_MODIFICATION.format(
-        prompt_history=prompt_hist, current_prompt=curr_prompt, suggestions=suggestions
+        n=n,
+        prompt_history=prompt_hist,
+        current_prompt=curr_prompt,
+        suggestions=suggestions,
     )

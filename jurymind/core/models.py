@@ -109,9 +109,18 @@ class SampleAnalysis(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    explanation: str = Field(description="Explain why you predicted the given label.")
+    explanation: str = Field(
+        description="Explain why you came to this prediction for the classification task."
+    )
+
+    data_point: str = Field(description="The data point you were asked to classify.")
+
+    sys_prompt: str = Field(
+        description="System prompt for the task. DO NOT PUT THE EXAMPLE HERE."
+    )
+
     prediction: str = Field(
-        description="You come up with a classification prediction based on the prompt instructions. This is not where you put the ground truth or other explanation."
+        description="You come up with a classification prediction based on the system prompt instructions. This is not where you put the ground truth or other explanation."
     )
 
 
@@ -134,8 +143,16 @@ class BatchClassificationResult(BaseModel):
 
 class ModificationReport(BaseModel):
 
+    original_prompt: str = Field(
+        description="The prompt you are being asked to come up with modification suggestions for"
+    )
+
+    accuracy: float = Field(
+        description="Accuracy of the batch with the original prompt."
+    )
     suggested_changes: str = Field(
-        description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list that another LLM can follow."
+        "No changes at this time",
+        description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list that another LLM can follow.",
     )
 
     explanation: str = Field(
@@ -151,5 +168,5 @@ class ModificationReport(BaseModel):
     # )
 
 
-class PromptVariants:
+class PromptVariants(BaseModel):
     variants: list[str] = Field(description="Put the list of new variant prompts here.")

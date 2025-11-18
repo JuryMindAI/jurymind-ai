@@ -55,6 +55,7 @@ if __name__ == "__main__":
         "The task is a binary classification task to determine if some piece of data fits the prompts criteria.",
         evaluation_examples=task_exmamples,
         evaluators=[accuracy_evaluator],
+        max_epochs=2,
     )
 
     policy.run()
