@@ -28,9 +28,10 @@ from jurymind.core.models import (
     TaskExample,
     PromptVariants,
 )
-
+from itertools import repeat
 from dataclasses import dataclass
 from typing import Optional, List
+from concurrent.futures import ThreadPoolExecutor
 
 
 @dataclass
@@ -84,7 +85,7 @@ class PromptOptimizer(BasePolicy):
         model: str = "openai:gpt-4.1-mini",
         evaluator_model: str = "openai:gpt-4.1",  # Defaults to more advanced model for evaluations
         max_epochs: int = 10,
-        num_workers: int = 1,
+        num_workers: int = 5,
         search_type: str = "beam",
         tracking_mlflow: bool = False,
         training_examples: list[TaskExample] = None,
@@ -160,7 +161,7 @@ class PromptOptimizer(BasePolicy):
 
         raise NotImplementedError()
 
-    def __run_evaluations(
+    def __run_eval_funcs(
         self, model_predictions: list[str], data_expectations: list[str]
     ):
         """
@@ -174,7 +175,7 @@ class PromptOptimizer(BasePolicy):
         return results
 
     def __search_space(
-        self, search_space: list, examples: list, expectations=None, sample_size=10, k=5
+        self, prompt: str, examples: list, sample_size=10
     ) -> list[ModificationReport]:
         """
         Perform a search over the space of prompts to optimize for the given task
@@ -183,54 +184,55 @@ class PromptOptimizer(BasePolicy):
             space (_type_): Search space of prompts to run against example data
 
         """
+
         # run each candidate in the space through the evaluator functions
         # once all candidates have run through eval functions, generate new modified variations off the top k scoring p_i-1 candidates
         depth_results = []
-        for prompt in search_space:
+        # logger.info(fexpectations)
+        # for prompt in search_space:
+        logger.info(f"Working on Prompt: {prompt}")
+        # TODO: Should multi thread this since each prompt would be its own set of work
+        # THIS DOESNT WORK WE NEED TO SAMPLE
+        minibatch_sample = random.sample(examples, sample_size)
 
-            # TODO: Should multi thread this since each prompt would be its own set of work
-            minibatch_sample = random.sample(examples, sample_size)
+        data = [x.example for x in minibatch_sample]
+        expectations = [x.label for x in minibatch_sample]
 
-            batch_prediction_prompt = build_classifier_prompt(
-                prompt=prompt,
-                batch=json.dumps(
-                    minibatch_sample
-                ),  # dont give the model both the example and the labels, the llm may try to cheat.
-            )
+        batch_prediction_prompt = build_classifier_prompt(
+            prompt=prompt,
+            batch=json.dumps(
+                data
+            ),  # dont give the model both the example and the labels, the llm may try to cheat.
+        )
 
-            batch_prediction_result = self.__classification_agent.run_sync(
-                batch_prediction_prompt
-            ).output
+        batch_prediction_result = self.__classification_agent.run_sync(
+            batch_prediction_prompt
+        ).output
 
-            logger.info(f"Batch Prediction Results: {batch_prediction_result}")
-            # list of evaluation results we need to merge with all the candidates
-            evaluation_metric_results = self.__run_evaluations(
-                batch_prediction_result.predictions, expectations
-            )
+        # list of evaluation results we need to merge with all the candidates
+        evaluation_metric_results = self.__run_eval_funcs(
+            batch_prediction_result.predictions, expectations
+        )
 
-            logger.info(f"Evaluation Metric Results: {evaluation_metric_results}")
-            eval_report_prompt = build_evaluation_prompt(
-                prompt,
-                self.task_description,
-                evaluation_metric_results,
-                batch_prediction_result,
-                expectations,
-            )
+        eval_report_prompt = build_evaluation_prompt(
+            prompt,
+            self.task_description,
+            evaluation_metric_results,
+            batch_prediction_result,
+            expectations,
+        )
 
-            # attempt to use LLM to evaluate the ouput results
-            eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
-            logger.info(f"Eval Report: {eval_report}")
-            # Return all the results from this layer of evaluation
-            depth_results.append(eval_report)
+        # attempt to use LLM to evaluate the ouput results
+        eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
+        logger.info(f"Eval Report: {eval_report}")
+        # Return all the results from this layer of evaluation
+        depth_results.append(eval_report)
 
         return depth_results
 
     def run(self, beam_width=5):
         """Performs beam search to help optimize prompt"""
         all_beam_results: List = []
-
-        examples = [x.example for x in self.evaluation_examples]
-        expectations = [x.label for x in self.evaluation_examples]
 
         # -------------------------------
         # START WITH SINGLE PARENT
@@ -261,21 +263,29 @@ class PromptOptimizer(BasePolicy):
         for epoch in range(self.max_epochs):
             logger.info(f"Running Epoch: {epoch}")
 
-            # 1️⃣ Generate children
+            # 1 Generate children
             children_prompts = generate_children(parents, n=beam_width)
 
-            # 2️⃣ Evaluate children
-            child_results = self.__search_space(
-                children_prompts, examples, expectations
-            )
+            with ThreadPoolExecutor(max_workers=self.num_workers) as pool:
+                child_results = list(
+                    pool.map(
+                        self.__search_space,
+                        children_prompts,
+                        repeat(self.evaluation_examples),
+                    )
+                )
+            # # 2️ search beam
+            # child_results = self.__search_space(
+            #     children_prompts, examples, expectations
+            # )
 
-            # 3️⃣ Sort and prune top-K
+            # 3️ Sort and prune top-K
             child_results_sorted = sorted(
                 child_results, key=lambda x: x.accuracy, reverse=True
             )
             top_k_results = child_results_sorted[:beam_width]
 
-            # 4️⃣ Convert to BeamParent objects for next epoch
+            # 4️ Convert to BeamParent objects for next epoch
             parents = [
                 BeamParent(
                     prompt=r.original_prompt,
@@ -285,10 +295,10 @@ class PromptOptimizer(BasePolicy):
                 for r in top_k_results
             ]
 
-            # 5️⃣ Add to global history
+            # 5️ Add to global history
             all_beam_results.extend(top_k_results)
 
-        return all_beam_results
+        return all_beam_results  # take arg max
 
     # def run(self, beam_width=5):
     #     """Run the optimization steps for this policy. Uses Beam search to find optimal search space."""

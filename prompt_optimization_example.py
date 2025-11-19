@@ -6,6 +6,7 @@ from jurymind.core.optimization import PromptOptimizer
 from jurymind.core.models import ClassificationResult, TaskExample
 from jurymind.evaluation.base import evaluator
 from sklearn.metrics import accuracy_score
+from loguru import logger
 
 
 @evaluator
@@ -29,7 +30,7 @@ def accuracy_evaluator(output: list[ClassificationResult], expectations: list[st
     correct = 0
     total = 0
     for i, x in enumerate(output):
-
+        logger.info(f"Expectation: {expectations}")
         if x.prediction.lower() == expectations[i].lower():
             correct += 1
         total += 1

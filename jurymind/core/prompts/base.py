@@ -91,7 +91,7 @@ ClassificationResult:
 
 EVALUATE_INSTRUCTIONS = """
 Your job is generating a report on how well the given prompt was able to perform a task_description. 
-You must take the predictions and compare those with the known ground truth labels. 
+You must take the predictions and compare those with the known ground truth labels. You also have the metrics results to see how well the prompt did overall.
 You must then output suggested changes to be made to the prompt that will help improve the metrics. You must also give an explanation as to why these changes
 will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for overfitting, mention that in your explanation.
 
@@ -107,13 +107,13 @@ will improve the scores. DO NOT OVERFIT TO THE EXAMPLES. If there is concern for
 
 {predictions}
 
-### Evaluation Metric Results:
-
-{metric_results}
-
 ### Ground truth labels:
 
 {ground_truth}
+
+### Evaluation Metric Results:
+
+{metric_results}
 
 ###
 Note that the ground-truth labels are __absolutely correct__, but the prompts may be incorrect and need modification.
