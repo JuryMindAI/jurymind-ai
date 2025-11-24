@@ -30,7 +30,7 @@ def accuracy_evaluator(output: list[ClassificationResult], expectations: list[st
     correct = 0
     total = 0
     for i, x in enumerate(output):
-        logger.info(f"Expectation: {expectations}")
+        logger.info(f"prediction: {x}")
         if x.prediction.lower() == expectations[i].lower():
             correct += 1
         total += 1
@@ -57,6 +57,7 @@ if __name__ == "__main__":
         evaluation_examples=task_exmamples,
         evaluators=[accuracy_evaluator],
         max_epochs=2,
+        num_workers=1,
     )
 
     policy.run()

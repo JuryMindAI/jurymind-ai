@@ -170,7 +170,6 @@ class PromptOptimizer(BasePolicy):
         """
         results = []
         for func in self.evaluation_functions:
-            logger.info(func)
             results.append(func(model_predictions, data_expectations))
         return results
 
@@ -195,25 +194,25 @@ class PromptOptimizer(BasePolicy):
         # THIS DOESNT WORK WE NEED TO SAMPLE
         minibatch_sample = random.sample(examples, sample_size)
 
-        data = [x.example for x in minibatch_sample]
+        sample = [x.example for x in minibatch_sample]
         expectations = [x.label for x in minibatch_sample]
 
         batch_prediction_prompt = build_classifier_prompt(
             prompt=prompt,
             batch=json.dumps(
-                data
+                sample
             ),  # dont give the model both the example and the labels, the llm may try to cheat.
         )
-
+        logger.info(batch_prediction_prompt)
         batch_prediction_result = self.__classification_agent.run_sync(
             batch_prediction_prompt
         ).output
-
+        logger.info(batch_prediction_result)
         # list of evaluation results we need to merge with all the candidates
         evaluation_metric_results = self.__run_eval_funcs(
             batch_prediction_result.predictions, expectations
         )
-
+        logger.info(evaluation_metric_results)
         eval_report_prompt = build_evaluation_prompt(
             prompt,
             self.task_description,
@@ -231,6 +230,8 @@ class PromptOptimizer(BasePolicy):
         return depth_results
 
     def run(self, beam_width=5):
+        import numpy as np
+
         """Performs beam search to help optimize prompt"""
         all_beam_results: List = []
 
@@ -274,17 +275,18 @@ class PromptOptimizer(BasePolicy):
                         repeat(self.evaluation_examples),
                     )
                 )
+            child_results = np.array(child_results).flatten()
             # # 2️ search beam
             # child_results = self.__search_space(
             #     children_prompts, examples, expectations
-            # )
-
+            # )"
+            logger.info(f"child_results: \n {child_results}")
             # 3️ Sort and prune top-K
-            child_results_sorted = sorted(
-                child_results, key=lambda x: x.accuracy, reverse=True
-            )
-            top_k_results = child_results_sorted[:beam_width]
-
+            # child_results_sorted = sorted(
+            #     child_results, key=lambda x: x.accuracy, reverse=True
+            # )
+            # top_k_results = child_results_sorted[:beam_width]
+            top_k_results = child_results[:beam_width]
             # 4️ Convert to BeamParent objects for next epoch
             parents = [
                 BeamParent(
