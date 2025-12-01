@@ -129,7 +129,7 @@ class PromptOptimizer(BasePolicy):
         self.training_examples: list[TaskExample] = training_examples
         self.evaluation_examples: list[TaskExample] = evaluation_examples
         self.evaluation_functions: list[Callable] = evaluators
-
+        self.tracking_mlflow: bool = tracking_mlflow
         # Setup the agents to be used in this policy workflow
         self.__classification_agent = Agent(
             self.agent_model_id, output_type=BatchClassificationResult, retries=3
@@ -146,7 +146,10 @@ class PromptOptimizer(BasePolicy):
             self.agent_model_id, output_type=PromptVariants, retries=3
         )
 
-        # if self.mlflow_tracking:
+        if self.tracking_mlflow:
+            logger.info("Setting up mlflow tracking for prompt optimization")
+            logger.info(f"Experiment Name: OptimizationTag:{uuid.uuid4()}")
+            logger.info("NOT IMPLEMENTED YET")
         #     mlflow.set_experiment(f"OptimizationTag:{uuid.uuid4()}")
         # self.__tracking_mlflow = tracking_mlflow
 
