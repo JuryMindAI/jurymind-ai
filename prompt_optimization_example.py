@@ -30,10 +30,14 @@ def accuracy_evaluator(output: list[ClassificationResult], expectations: list[st
     correct = 0
     total = 0
     for i, x in enumerate(output):
-        logger.info(f"prediction: {x}")
+
         if x.prediction.lower() == expectations[i].lower():
             correct += 1
         total += 1
+
+    logger.info("EVAL RESULTS")
+    logger.info(correct, total)
+
     return float(correct) / total
 
 
@@ -41,10 +45,11 @@ if __name__ == "__main__":
     load_dotenv()
 
     df = pd.read_csv("spamhamdata.csv", sep="\t", header=None, names=["label", "sms"])
+    logger.info(df.shape)
 
-    n_samples = 30
-
-    sample = df.groupby("label").sample(n=n_samples, random_state=42)
+    sample = df.groupby("label").sample(
+        random_state=42
+    )  # keep it as pandas dataframe for simplicity
     sample = sample.sample(frac=1)
     task_exmamples = [
         TaskExample(example=x.sms, label=x.label) for x in sample.itertuples()

@@ -4,15 +4,20 @@ Classes and functions to run different opmtimization tasks.
 
 import json
 import random
+import uuid
+import tqdm
+import mlflow
+
+
 from pprint import pprint
 from typing import Callable
+from functools import partial
+
 
 from pydantic_ai import Agent
 from loguru import logger
-import mlflow
 
 from mlflow.entities import SpanType
-import tqdm
 from pydantic import BaseModel
 
 from jurymind.core.prompts.base import (
@@ -84,14 +89,15 @@ class PromptOptimizer(BasePolicy):
         task_description: str,
         model: str = "openai:gpt-4.1-mini",
         evaluator_model: str = "openai:gpt-4.1",  # Defaults to more advanced model for evaluations
-        max_epochs: int = 10,
-        num_workers: int = 5,
+        max_epochs: int = 5,
+        num_workers: int = 2,
         search_type: str = "beam",
         tracking_mlflow: bool = False,
         training_examples: list[TaskExample] = None,
         evaluation_examples: list[TaskExample] = None,
         evaluators: list[Callable] = None,
         structured_output_type: BaseModel = None,
+        return_global_max: bool = False,  # Evaluate all levels of search space for global max
     ):
         """
         Initialize prompt optimization
@@ -136,6 +142,8 @@ class PromptOptimizer(BasePolicy):
             self.agent_model_id, output_type=PromptVariants, retries=3
         )
 
+        # if self.mlflow_tracking:
+        #     mlflow.set_experiment(f"OptimizationTag:{uuid.uuid4()}")
         # self.__tracking_mlflow = tracking_mlflow
 
     def _candidate_generation(
@@ -177,7 +185,7 @@ class PromptOptimizer(BasePolicy):
         self, prompt: str, examples: list, sample_size=10
     ) -> list[ModificationReport]:
         """
-        Perform a search over the space of prompts to optimize for the given task
+        Perform a search over the optimization space
 
         Args:
             space (_type_): Search space of prompts to run against example data
@@ -203,15 +211,23 @@ class PromptOptimizer(BasePolicy):
                 sample
             ),  # dont give the model both the example and the labels, the llm may try to cheat.
         )
+
+        logger.info("BATCH PREDICTION PROMPT")
         logger.info(batch_prediction_prompt)
+
         batch_prediction_result = self.__classification_agent.run_sync(
             batch_prediction_prompt
         ).output
+
+        logger.info("BATCH PREDICTION RESULTS")
         logger.info(batch_prediction_result)
+
         # list of evaluation results we need to merge with all the candidates
         evaluation_metric_results = self.__run_eval_funcs(
             batch_prediction_result.predictions, expectations
         )
+
+        logger.info("EVAL METRIC RESULTS")
         logger.info(evaluation_metric_results)
         eval_report_prompt = build_evaluation_prompt(
             prompt,
@@ -267,14 +283,19 @@ class PromptOptimizer(BasePolicy):
             # 1 Generate children
             children_prompts = generate_children(parents, n=beam_width)
 
+            # Evenly sample each group for this round of evaluation
+            training_sample = self.training_examples
             with ThreadPoolExecutor(max_workers=self.num_workers) as pool:
+                # Create partial with desired keyword argument
+                search_fn = partial(self.__search_space, sample_size=sample_size)
                 child_results = list(
                     pool.map(
-                        self.__search_space,
+                        search_fn,
                         children_prompts,
-                        repeat(self.evaluation_examples),
+                        repeat(training_sample),
                     )
                 )
+
             child_results = np.array(child_results).flatten()
             # # 2️ search beam
             # child_results = self.__search_space(
@@ -300,6 +321,7 @@ class PromptOptimizer(BasePolicy):
             # 5️ Add to global history
             all_beam_results.extend(top_k_results)
 
+        # Perform final evaluation across all beam results to pick the best prompt
         return all_beam_results  # take arg max
 
     # def run(self, beam_width=5):
