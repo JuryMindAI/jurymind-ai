@@ -5,8 +5,10 @@ Classes and functions to run different opmtimization tasks.
 import json
 import random
 import uuid
+from pandas import DataFrame
 import tqdm
 import mlflow
+import numpy as np
 
 
 from pprint import pprint
@@ -29,7 +31,6 @@ from jurymind.core.prompts.base import (
 from jurymind.core.models import (
     BatchClassificationResult,
     ModificationReport,
-    OptimizationStepResult,
     TaskExample,
     PromptVariants,
 )
@@ -80,21 +81,23 @@ class OptimizationPipeline(BasePipeline):
 
 class PromptOptimizer(BasePolicy):
     """
-    Optimize a prompt to a specific task.
+    Policy to Optimize prompts for a given task using beam search strategy.
     """
 
     def __init__(
         self,
         prompt: str,
         task_description: str,
+        training_examples: list[TaskExample],
         model: str = "openai:gpt-4.1-mini",
         evaluator_model: str = "openai:gpt-4.1",  # Defaults to more advanced model for evaluations
         max_epochs: int = 5,
         num_workers: int = 2,
-        search_type: str = "beam",
+        search_type: str = "beam",  # greedy, beam defaults to beam search
         tracking_mlflow: bool = False,
-        training_examples: list[TaskExample] = None,
-        evaluation_examples: list[TaskExample] = None,
+        evaluation_examples: list[
+            TaskExample
+        ] = None,  # Optional list of evaluation examples to use during optimization. If none provided, training examples will be used to synthethise evaluation set.
         evaluators: list[Callable] = None,
         structured_output_type: BaseModel = None,
         return_global_max: bool = False,  # Evaluate all levels of search space for global max
@@ -103,9 +106,10 @@ class PromptOptimizer(BasePolicy):
         Initialize prompt optimization
 
         Args:
-            prompt (str): Prompt to optimize in this policy.
+            prompt (str): Prompt to optimize with this policy.
             task_description (str): Description of the task we are optimizing the prompt for.
-            model (str, optional): LLM to use for optimizing the prompt. Defaults to "gpt-5-mini-2025-08-07".
+            model (str, optional): LLM to use for optimizing the prompt. Defaults to "openai:gpt-4.1-mini".
+            evaluator_model (str, optional): LLM to use for evaluating prompt changes. Defaults to "openai:gpt-4.1".
             max_epochs (int, optional): Max number of epochs to perform optimization on. Defaults to 10.
             num_workers (int, optional): Number of parallel workers to use. Defaults to 1.
             search_type (str, optional): Which search space algorithm to use for finding optimal prompt. Defaults to "greedy".
@@ -147,14 +151,14 @@ class PromptOptimizer(BasePolicy):
         # self.__tracking_mlflow = tracking_mlflow
 
     def _candidate_generation(
-        self, prompt, task_description, suggestions=None, n=5
+        self, prompt: str, task_description: str, suggestions: str = None, n=5
     ) -> str:
         """
         Generates a list of candidates to explore for further optimization
 
         Args:
-            prompt (_type_): prompt to expand from
-            task_description (_type_): description of the task the prompt is trying to solve for
+            prompt (str): prompt to expand from
+            task_description (str): description of the task the prompt is trying to solve for
             suggestions: if suggestions are available from previous eval runs, provide them to the llm. Defaults to None.
         """
         raise NotImplementedError()
@@ -188,18 +192,15 @@ class PromptOptimizer(BasePolicy):
         Perform a search over the optimization space
 
         Args:
-            space (_type_): Search space of prompts to run against example data
-
+            prompt (str): prompt to explore the search space for
+            examples (list): list of examples to use for evaluation
+            sample_size (int, optional): number of examples to sample for evaluation. Defaults to 10.
         """
 
         # run each candidate in the space through the evaluator functions
         # once all candidates have run through eval functions, generate new modified variations off the top k scoring p_i-1 candidates
         depth_results = []
-        # logger.info(fexpectations)
-        # for prompt in search_space:
         logger.info(f"Working on Prompt: {prompt}")
-        # TODO: Should multi thread this since each prompt would be its own set of work
-        # THIS DOESNT WORK WE NEED TO SAMPLE
         minibatch_sample = random.sample(examples, sample_size)
 
         sample = [x.example for x in minibatch_sample]
@@ -220,7 +221,7 @@ class PromptOptimizer(BasePolicy):
         ).output
 
         logger.info("BATCH PREDICTION RESULTS")
-        logger.info(batch_prediction_result)
+        logger.info(batch_prediction_result.model_dump_json(indent=2))
 
         # list of evaluation results we need to merge with all the candidates
         evaluation_metric_results = self.__run_eval_funcs(
@@ -239,15 +240,13 @@ class PromptOptimizer(BasePolicy):
 
         # attempt to use LLM to evaluate the ouput results
         eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
-        logger.info(f"Eval Report: {eval_report}")
+        logger.info(f"Eval Report: {eval_report.model_dump_json(indent=2)}")
         # Return all the results from this layer of evaluation
         depth_results.append(eval_report)
 
         return depth_results
 
     def run(self, beam_width=5):
-        import numpy as np
-
         """Performs beam search to help optimize prompt"""
         all_beam_results: List = []
 

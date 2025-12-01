@@ -80,7 +80,9 @@ class OptimzationModelMap(BaseModel):
 
 class TaskExample(BaseModel):
     example: str = Field(description="Example to use for the Task.")
-    label: str = Field(description="Label of the example for the given task.")
+    expectation: str = Field(
+        description="Expected output of the task for the given example."
+    )
 
 
 class DataPoint(BaseModel):
@@ -125,6 +127,12 @@ class ClassificationResult(BaseModel):
 
 
 class OptimizationStepResult(BaseModel):
+    """
+    OptimizationStepResult DEPRECATED FOR NOW
+
+    Args:
+        BaseModel (_type_): _description_
+    """
 
     explanation: str = Field(
         description="You explains the reasons for the changes you made along with how it will solve for issues with the original prompt."
@@ -158,14 +166,6 @@ class ModificationReport(BaseModel):
     explanation: str = Field(
         description="You must give your reasoning as to why these changes need to be made to increase the performance on the task."
     )
-
-    # accuracy: float = Field(
-    #     description="The accuracy percentage of the classification results."
-    # )
-
-    # confusion_matrix: dict = Field(
-    #     description="Confusion matrix of the predictions to the ground truth."
-    # )
 
 
 class PromptVariants(BaseModel):

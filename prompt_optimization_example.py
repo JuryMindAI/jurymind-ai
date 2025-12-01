@@ -1,7 +1,9 @@
+from mistralai import TrainingFile
 import mlflow
 import json
 from dotenv import load_dotenv
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from jurymind.core.optimization import PromptOptimizer
 from jurymind.core.models import ClassificationResult, TaskExample
 from jurymind.evaluation.base import evaluator
@@ -47,19 +49,25 @@ if __name__ == "__main__":
     df = pd.read_csv("spamhamdata.csv", sep="\t", header=None, names=["label", "sms"])
     logger.info(df.shape)
 
-    sample = df.groupby("label").sample(
-        random_state=42
-    )  # keep it as pandas dataframe for simplicity
-    sample = sample.sample(frac=1)
-    task_exmamples = [
-        TaskExample(example=x.sms, label=x.label) for x in sample.itertuples()
+    # setup train test split
+    train, test = train_test_split(
+        df, test_size=0.2, random_state=42, stratify=df["label"]
+    )
+
+    training_examples = [
+        TaskExample(example=x.sms, label=x.label) for x in train.itertuples()
     ]
+    evaluation_examples = [
+        TaskExample(example=x.sms, label=x.label) for x in test.itertuples()
+    ]
+
     # mlflow.set_tracking_uri("http://127.0.0.1:5000")
     # mlflow.set_experiment("Test1")
     policy = PromptOptimizer(
         "Tell me if the following data is spam or ham.",
         "The task is a binary classification task to determine if some piece of data fits the prompts criteria.",
-        evaluation_examples=task_exmamples,
+        training_examples=training_examples,
+        evaluation_examples=evaluation_examples,
         evaluators=[accuracy_evaluator],
         max_epochs=2,
         num_workers=1,
