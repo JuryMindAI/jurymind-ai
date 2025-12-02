@@ -55,10 +55,10 @@ if __name__ == "__main__":
     )
 
     training_examples = [
-        TaskExample(example=x.sms, label=x.label) for x in train.itertuples()
+        TaskExample(example=x.sms, expectation=x.label) for x in train.itertuples()
     ]
     evaluation_examples = [
-        TaskExample(example=x.sms, label=x.label) for x in test.itertuples()
+        TaskExample(example=x.sms, expectation=x.label) for x in test.itertuples()
     ]
 
     # mlflow.set_tracking_uri("http://127.0.0.1:5000")

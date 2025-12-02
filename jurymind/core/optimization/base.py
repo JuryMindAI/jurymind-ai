@@ -207,7 +207,7 @@ class PromptOptimizer(BasePolicy):
         minibatch_sample = random.sample(examples, sample_size)
 
         sample = [x.example for x in minibatch_sample]
-        expectations = [x.label for x in minibatch_sample]
+        expectations = [x.expectation for x in minibatch_sample]
 
         batch_prediction_prompt = build_classifier_prompt(
             prompt=prompt,
@@ -289,7 +289,7 @@ class PromptOptimizer(BasePolicy):
             training_sample = self.training_examples
             with ThreadPoolExecutor(max_workers=self.num_workers) as pool:
                 # Create partial with desired keyword argument
-                search_fn = partial(self.__search_space, sample_size=sample_size)
+                search_fn = partial(self.__search_space, sample_size=100)
                 child_results = list(
                     pool.map(
                         search_fn,
