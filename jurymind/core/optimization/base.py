@@ -6,6 +6,7 @@ import json
 import random
 import uuid
 from pandas import DataFrame
+from sklearn.model_selection import train_test_split
 import tqdm
 import mlflow
 import numpy as np
@@ -101,6 +102,7 @@ class PromptOptimizer(BasePolicy):
         evaluators: list[Callable] = None,
         structured_output_type: BaseModel = None,
         return_global_max: bool = False,  # Evaluate all levels of search space for global max
+        seed: int = 42,
     ):
         """
         Initialize prompt optimization
@@ -145,6 +147,7 @@ class PromptOptimizer(BasePolicy):
         self.__modification_agent = Agent(
             self.agent_model_id, output_type=PromptVariants, retries=3
         )
+        # self.seed = seed
 
         if self.tracking_mlflow:
             logger.info("Setting up mlflow tracking for prompt optimization")
@@ -189,7 +192,11 @@ class PromptOptimizer(BasePolicy):
         return results
 
     def __search_space(
-        self, prompt: str, examples: list, sample_size=10
+        self,
+        prompt: str,
+        batch_examples: list,
+        batch_expectations: list,
+        # sample_size=10,
     ) -> list[ModificationReport]:
         """
         Perform a search over the optimization space
@@ -202,21 +209,16 @@ class PromptOptimizer(BasePolicy):
 
         # run each candidate in the space through the evaluator functions
         # once all candidates have run through eval functions, generate new modified variations off the top k scoring p_i-1 candidates
-        depth_results = []
+        beam_results = []
         logger.info(f"Working on Prompt: {prompt}")
-        minibatch_sample = random.sample(examples, sample_size)
-
-        sample = [x.example for x in minibatch_sample]
-        expectations = [x.expectation for x in minibatch_sample]
 
         batch_prediction_prompt = build_classifier_prompt(
             prompt=prompt,
             batch=json.dumps(
-                sample
+                batch_examples
             ),  # dont give the model both the example and the labels, the llm may try to cheat.
         )
 
-        logger.info("BATCH PREDICTION PROMPT")
         logger.info(batch_prediction_prompt)
 
         batch_prediction_result = self.__classification_agent.run_sync(
@@ -228,29 +230,28 @@ class PromptOptimizer(BasePolicy):
 
         # list of evaluation results we need to merge with all the candidates
         evaluation_metric_results = self.__run_eval_funcs(
-            batch_prediction_result.predictions, expectations
+            batch_prediction_result.predictions, batch_expectations
         )
 
-        logger.info("EVAL METRIC RESULTS")
-        logger.info(evaluation_metric_results)
         eval_report_prompt = build_evaluation_prompt(
             prompt,
             self.task_description,
             evaluation_metric_results,
             batch_prediction_result,
-            expectations,
+            batch_expectations,
         )
 
         # attempt to use LLM to evaluate the ouput results
         eval_report = self.__evaluation_agent.run_sync(eval_report_prompt).output
-        logger.info(f"Eval Report: {eval_report.model_dump_json(indent=2)}")
-        # Return all the results from this layer of evaluation
-        depth_results.append(eval_report)
+        logger.info(f"Eval Report: \n\n{eval_report.model_dump_json(indent=2)}")
 
-        return depth_results
+        # Return all the results from this layer of evaluation
+        beam_results.append(eval_report)
+
+        return beam_results
 
     def run(self, beam_width=5):
-        """Performs beam search to help optimize prompt"""
+        """Performs beam search to help optimize the prompt"""
         all_beam_results: List = []
 
         # -------------------------------
@@ -285,31 +286,38 @@ class PromptOptimizer(BasePolicy):
             # 1 Generate children
             children_prompts = generate_children(parents, n=beam_width)
 
-            # Evenly sample each group for this round of evaluation
-            training_sample = self.training_examples
+            examples = [x.example for x in self.training_examples]
+            expectations = [x.expectation for x in self.training_examples]
+            x = []
+
+            logger.info(len(examples))
+
+            # 2 Search Space
+            training_sample, _, expectation_sample, _ = train_test_split(
+                examples,
+                expectations,
+                train_size=100,  # or 0.5, 1000, etc.
+                stratify=expectations,
+            )
+
+            logger.info(len(training_sample))
             with ThreadPoolExecutor(max_workers=self.num_workers) as pool:
-                # Create partial with desired keyword argument
-                search_fn = partial(self.__search_space, sample_size=100)
+                # Kick off each partial
+                search_fn = partial(self.__search_space)
                 child_results = list(
                     pool.map(
                         search_fn,
                         children_prompts,
                         repeat(training_sample),
+                        repeat(expectation_sample),
                     )
                 )
 
             child_results = np.array(child_results).flatten()
-            # # 2️ search beam
-            # child_results = self.__search_space(
-            #     children_prompts, examples, expectations
-            # )"
             logger.info(f"child_results: \n {child_results}")
-            # 3️ Sort and prune top-K
-            # child_results_sorted = sorted(
-            #     child_results, key=lambda x: x.accuracy, reverse=True
-            # )
-            # top_k_results = child_results_sorted[:beam_width]
+            # 3️ Sort and prune to top-K
             top_k_results = child_results[:beam_width]
+
             # 4️ Convert to BeamParent objects for next epoch
             parents = [
                 BeamParent(
@@ -325,72 +333,6 @@ class PromptOptimizer(BasePolicy):
 
         # Perform final evaluation across all beam results to pick the best prompt
         return all_beam_results  # take arg max
-
-    # def run(self, beam_width=5):
-    #     """Run the optimization steps for this policy. Uses Beam search to find optimal search space."""
-    #     # runs the workflow for this policy
-    #     epoch = 0
-    #     # each step holds the current prompt
-    #     # Generate k variants up front to get and initial search space beyond a singular prompt
-    #     __p0_variants = self.__generation_agent.run_sync(self.original_prompt).output
-    #     # __all_candi = __p0_variants.variants + [self.original_prompt]
-
-    #     beam_candidates = __p0_variants.variants + [self.original_prompt]
-    #     all_beam_results = []
-
-    #     examples = [x.example for x in self.evaluation_examples]
-    #     expectations = [x.label for x in self.evaluation_examples]
-
-    #     # pbar = tqdm.tqdm(desc="Prompt Optimizing", total=self.max_epochs)
-    #     # Loop for n epochs, collecting up the results per pass
-    #     while epoch < self.max_epochs:
-    #         logger.info(f"Running Epoch: {epoch}")
-    #         # search the current depth of space
-    #         beam_results = self.__search_space(beam_candidates, examples, expectations)
-
-    #         logger.info(f"Beam Result: {beam_results}")
-    #         # get top k from beam candidates (list of candidate with eval score)
-
-    #         top_k = sorted(beam_results, key=lambda x: x.accuracy, reverse=True)[
-    #             :beam_width
-    #         ]
-    #         # add the top k results to all the beam search results
-    #         all_beam_results.extend(top_k)
-
-    #         # reset beam candidates for next round of searching
-    #         beam_candidates = []
-
-    #         children = []
-    #         for prompt in top_k:
-    #             children.extend(
-    #                 self.__modification_agent.run_sync(
-    #                     build_modification_prompt(
-    #                         all_beam_results,  # current history of top_k from each beam
-    #                         prompt.original_prompt,
-    #                         prompt.suggested_changes,
-    #                         n=beam_width,
-    #                     )
-    #                 ).output.variants
-    #             )
-
-    #             # now generate next round of candidates based off of the top k we just got from above
-    #             # for prompt in top_k:
-    #             # modification_prompt = build_modification_prompt(
-    #             #     all_beam_results,  # current history of top_k from each beam
-    #             #     prompt.original_prompt,
-    #             #     prompt.suggested_changes,
-    #             #     n=beam_width,
-    #             # )
-    #         #     # do I want to keep ALL candidates or just the top ones from last round
-    #         #     beam_candidates.extend(
-    #         #         self.__modification_agent.run_sync(
-    #         #             modification_prompt
-    #         #         ).output.variants
-    #         #     )
-    #         epoch += 1
-    #         # pbar.update(1)
-
-    #     return all_beam_results
 
     def get_step_history(self):
         return self._policy_optimization_history

@@ -126,6 +126,29 @@ class ClassificationResult(BaseModel):
     )
 
 
+class TaskResult(BaseModel):
+    """
+    TaskResult Model for use by LLM to return results of a task it was asked to perform.
+
+    Args:
+        BaseModel (Object): Pydantic BaseModel class
+    """
+
+    explanation: str = Field(
+        description="Explain why you came to this result for the task."
+    )
+
+    data_point: str = Field(description="The data point you performed the task on.")
+
+    sys_prompt: str = Field(
+        description="System prompt used to perform the task. DO NOT PUT THE DATA_POINT HERE."
+    )
+
+    result: str = Field(
+        description="You come up with a result based on the system prompt instructions. This is not where you put the ground truth or other explanations."
+    )
+
+
 class OptimizationStepResult(BaseModel):
     """
     OptimizationStepResult DEPRECATED FOR NOW
@@ -155,16 +178,17 @@ class ModificationReport(BaseModel):
         description="The prompt you are being asked to come up with modification suggestions for"
     )
 
-    accuracy: float = Field(
-        description="Accuracy of the batch with the original prompt."
+    explanation: str = Field(
+        description="You must give your reasoning as to why these changes need to be made to increase the performance on the task."
     )
+
     suggested_changes: str = Field(
         "No changes at this time",
         description="Changes that should be made to the original prompt to improve its ability to perform the task. Each suggested change should be defined via a markdown list that another LLM can follow.",
     )
 
-    explanation: str = Field(
-        description="You must give your reasoning as to why these changes need to be made to increase the performance on the task."
+    accuracy: float = Field(
+        description="Accuracy of the batch with the original prompt."
     )
 
 
