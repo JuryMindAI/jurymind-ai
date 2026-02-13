@@ -1,6 +1,4 @@
-from dotenv import load_dotenv
 
-load_dotenv()
 
 import mlflow
 
@@ -156,7 +154,7 @@ def optimize(
         # gen_examples = generator_agent.run_sync(generator_prompt).output
         # print(gen_examples.examples)
 
-        examples = [x["review"] for x in dataset]
+        examples = [x["example"] for x in dataset]
         ground_truth = [x["label"] for x in dataset]
 
         batch_prediction_prompt = __build_classifier_prompt(
